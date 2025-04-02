@@ -133,136 +133,111 @@ The remainder of this thesis is organized as follows:
 
 \textbf{Appendices} provide additional experiments, extended qualitative results, and tables of hyperparameters used in the thesis.
 
-% \section{APPENDIX}\label{appendix:model}
-%!TEX root = ../Manual.tex
 \section{Background on PET Imaging and Incomplete Ring Geometry}
 \label{chap:background}
-
-
-This section provides a brief but comprehensive overview of the fundamental aspects of PET imaging, focusing on the detection process, data acquisition methods, and conventional reconstruction algorithms. We then discuss incomplete ring PET scanners in detail, highlighting the geometry of missing detectors, their impact on data quality, and current solutions and unresolved research challenges.
+\subsection{System Model and Data Simulation}
+This section outlines the fundamental aspects of PET imaging and the particular challenges posed by incomplete detector rings. While most readers will be familiar with basic PET principles, understanding the specific complications that arise from missing detectors is crucial to appreciating our approach.
 
 % \subsection{Principles of PET Imaging}
-In PET imaging, positron-emitting nuclides (typically $^{18}\text{F}$, $^{15}\text{O}$, $^{11}\text{C}$, etc.) are usually combined with biologically relevant tracer compounds. After entering the bloodstream, these nuclides decay, with each emitting a positron. When the positron encounters an electron, an annihilation event occurs, producing two gamma photons, each with an energy of approximately 511 keV, traveling in nearly opposite directions (collinearly).
+PET imaging relies on a deceptively simple concept with remarkably complex implementation. Radioactive tracers—typically compounds labeled with $^{18}\text{F}$, $^{15}\text{O}$, or $^{11}\text{C}$—are introduced into the body, where they participate in metabolic processes. As these nuclides decay, each emits a positron that quickly encounters an electron, triggering an annihilation event. This collision produces a signature pair of gamma photons, each carrying precisely 511 keV of energy, traveling in nearly opposite directions.
 
-\begin{figure*}[htbp]
-    \centering
-    \vspace{-0.2cm}
-    \includegraphics[width=0.9\textwidth]{Images/Screenshot2025-02-07214940}
-    \vspace{-0.2cm}
-    \caption{Schematic diagram of PET detection, where the red dot represents the detector center, the green dot represents the annihilation event location, and the two blue dots represent the centers of the two detectors that detect the gamma rays. This figure is only illustrative; the detector parameters in the figure do not equal the actual simulation parameters.}
-    \vspace{-0.2cm}
-    \label{fig:pet_event}
-\end{figure*}
-
-PET scanners are designed to detect coincidences of these 511 keV photon pairs. When two detectors at different positions record gamma photons within a short coincidence time window, it is assumed that these photons came from the same annihilation event. This forms a line of response (LOR) between the two detector elements, as shown in Figure~\ref{fig:pet_event}.
-PET data can be acquired in multiple formats:
-(1) \textbf{List-mode data}: Each coincidence event is recorded individually, providing precise detector pair identification and timestamps.
-(2) \textbf{Sinogram data}: By categorizing coincidence counts into projection bins indexed by radial, angular, and axial coordinates (possibly also by axial ring difference), forming a 2D (or 3D) histogram.
-In a typical 3D PET system, a scanner with a complete ring covers a 360$^\circ$ view angle around the patient, ensuring uniform sampling of LORs.
-
-\subsection{Incomplete Ring PET Scanners}
-
-In normal PET (Positron Emission Tomography) system design, \emph{incomplete rings} or \emph{partial rings} often arise from various practical considerations and technical constraints. From an economic perspective, reducing the total number of detectors can effectively lower system costs. In certain specialized fields, such as brain imaging or organ-specific examinations, researchers may adopt partially covered designs to accommodate smaller field-of-view requirements. Additionally, with the continuous development of medical technology, innovative designs for hybrid or portable PET are increasingly important; these systems meet the needs of different clinical and research scenarios through lightweight, flexible structures. It is worth noting that technical factors such as detector failures, maintenance, upkeep, calibration, and other issues may also cause certain ring segments to temporarily stop operating, resulting in incomplete detector rings. These variations reflect the complexity and adaptability of PET imaging technology in practical applications.
-
-
-The main difficulty with incomplete rings is the reduction in angular sampling, as missing detectors lead to missing corresponding LORs, making the dataset incomplete, which breaks the fundamental assumptions of many classical reconstruction algorithms that rely on fully sampled complete angular projections. This data deficiency leads to a series of issues: producing streak artifacts and increased noise in the image domain, causing quantitative inaccuracies in tracer uptake (especially in regions that depend on missing LORs), and potentially introducing biases in clinical indices such as standardized uptake values (SUVs), thereby affecting diagnostic accuracy, as shown in Figure~\ref{fig:pet_incomplete_reconstruction}.
-
-
-\subsection{System Model and Data Simulation}
-Assume a standard PET ring geometry with \(R\) axial rings, each containing \(D\) detectors, with each detector assigned a unique identification number used to precisely locate the photon pair's detection position when recording coincidence events. For example, consider a 42-ring system (i.e., \(R=42\)), with 182 detectors per ring, arranged in a cylindrical structure with radius \(\rho\). We map the 3D image grid (e.g., \(\text{size}=128\times128\times128\) voxels) to physical space by defining voxel dimensions, approximating the entire scanner geometry realistically. For instance, if the field of view diameter is 25 centimeters and the in-plane matrix size is 128, then each in-plane voxel size is:
-\begin{equation}
-\Delta x \approx \Delta y \approx \frac{25\,\text{cm}}{128} \approx 1.95\,\text{mm}.
-\end{equation}
-Axially, we can set \(\Delta z\) based on the typical axial coverage of a PET scanner. This high-precision spatial division ensures that the reconstructed images accurately reflect the anatomical structure of the scanned area.
-
-The PET scanner used in this study employs a highly optimized detector system configuration, achieving comprehensive three-dimensional detection capabilities. The scanner's radius ($\rho$) is precisely set at 380.56 millimeters, achieving an optimal balance between spatial resolution and system sensitivity. The detector system adopts a multi-level organizational structure: at the microscopic level, crystal elements have lateral dimensions of 4.03125 millimeters and axial dimensions of 5.31556 millimeters, with this precise crystal size design ensuring high spatial resolution capability; at the macroscopic level, the detector construction includes 34 lateral sectors (rsectorTransNr) and a single axial sector arrangement (rsectorAxialNr). Each module is carefully designed to include 16 lateral (crystalTransNr) and 9 axial (crystalAxialNr) crystal elements, with the spacing between adjacent crystals (crystalTransSpacing and crystalAxialSpacing) optimized to achieve maximum detection efficiency. In the axial direction, the system has 4 modules (moduleAxialNr), maintaining a precise spacing of 50.64004 millimeters between modules (moduleAxialSpacing), a configuration that ensures detection sensitivity while maintaining an appropriate axial field of view range.
 % \begin{figure*}[htbp]
 %     \centering
 %     \vspace{-0.2cm}
-%     \includegraphics[width=0.7\textwidth]{Images/pet-side-view}
+%     \includegraphics[width=0.9\textwidth]{Images/Screenshot2025-02-07214940}
 %     \vspace{-0.2cm}
-%     \caption{Side view schematic of PET scanner detector structure.}
+%     \caption{Schematic diagram of PET detection, where the red dot represents the detector center, the green dot represents the annihilation event location, and the two blue dots represent the centers of the two detectors that detect the gamma rays. This figure is only illustrative; the detector parameters in the figure do not equal the actual simulation parameters.}
 %     \vspace{-0.2cm}
-%     \label{fig:pet_structures_side}
+%     \label{fig:pet_event}
 % \end{figure*}
-The system's data recording uses a list-mode format to record various coincidence events during the scanning process. The system supports time-of-flight (TOF) detection functionality, with 29 time bins (num\_tof\_bins), a full width at half maximum of the time resolution window (tof\_fwhm) of 57.71 millimeters, and a measurement range (tof\_range) reaching 735.7705 millimeters. However, due to current device performance limitations, this study could not fully utilize TOF technology to improve spatial resolution. Each event entry consists of three basic components, stored in tensor format. A typical list-mode event data structure is as follows:
 
-\begin{verbatim}
-[898, 3334, 11]
-[816, 16375, 18]
-[1073, 18816, 14]
-[1529, 13781, 13]
-[1537, 18663, 14]
-\end{verbatim}
+What makes PET so valuable—and challenging—is the detection of these photon pairs. When two detectors register gamma photons within a narrow time window (typically 6-12 nanoseconds), we assume they originated from the same annihilation event. This paired detection establishes a line of response (LOR) between the two detector elements.
 
-In this format, the first two numbers represent the identification numbers of the detector pair recording the coincidence event. The third number represents the time-of-flight information of the event, which, although not fully utilized in this study to enhance image quality, is retained for future data processing and analysis after system upgrades. To improve the system's sensitivity and accuracy, the detector system also includes submodule structures (submoduleAxialNr and submoduleTransNr both equal to 1), but in the current configuration, the submodule spacing (submoduleAxialSpacing and submoduleTransSpacing) is set to 0 to simplify system complexity.
+PET systems record these events in one of two primary formats. In \textbf{list-mode data}, each coincidence is logged individually with precise identification of the detector pair and timestamp. This approach preserves the maximum temporal information but generates enormous datasets. Alternatively, \textbf{sinogram data} groups coincidences into bins based on their radial, angular, and axial coordinates, forming a structured histogram that sacrifices some temporal resolution for data manageability. Conventional PET scanners employ complete 360$^\circ$ detector rings to achieve uniform LOR sampling—but what happens when this ideal geometry isn't possible?
 
-In the current implementation process, due to the lack of MRI or CT data to obtain gamma ray absorption distribution maps, the system cannot use $\mu$ maps (linear attenuation maps) or component-based normalization files. This limitation means that the reconstruction process can only use list-mode data as input and cannot perform attenuation correction. When interpreting reconstruction results, this limitation's impact on image quality and quantitative accuracy must be considered.
+\subsection{Incomplete Ring PET Scanners}
 
-\begin{figure*}[htbp]
-\centering
-\vspace{-0.2cm}
-\includegraphics[width=0.4\textwidth]{Images/Thehumanbrainisnotmissing3}
-\includegraphics[width=0.4\textwidth]{Images/Thehumanbrainisnotmissing4}
-\vspace{-0.2cm}
-\caption{Three-dimensional schematic of PET scanner detector structure, with the right image showing a perspective view.}
-\vspace{-0.2cm}
-\label{fig:pet_structures}
-\end{figure*}
+Incomplete ring configurations emerge from a clash between ideal physics and practical reality. Budget constraints often drive this compromise—each detector module represents significant cost, and reducing their number can make PET technology accessible to more facilities. In specialized applications, partial ring designs actually offer advantages: breast imaging benefits from closer detector positioning, interventional procedures require open scanner designs, and claustrophobic patients experience less anxiety with more open configurations.
 
+We've even witnessed this problem firsthand during our research. System maintenance frequently took detector modules offline, creating temporary incomplete ring scenarios that compromised image quality. These experiences highlighted that incomplete ring problems aren't merely theoretical—they're practical challenges that imaging centers regularly face.
 
+The consequences of missing detectors are profound. LORs that would normally pass through the missing sections simply vanish from the dataset, creating angular sampling gaps. This incomplete sampling fundamentally undermines classical reconstruction algorithms that assume uniform angular coverage. The resulting images suffer from streak artifacts, elevated noise levels, and—most concerning for clinical applications—quantitative inaccuracies in tracer uptake measurements. Regions depending heavily on the missing LORs show particularly severe degradation, potentially biasing critical clinical indices like standardized uptake values (SUVs) and compromising diagnostic accuracy. These effects are starkly visible in Figure~\ref{fig:pet_incomplete_reconstruction}.
 
-We refer to the fully functional scenario where all \(R\) rings and all \(D\) detectors are working as the \emph{complete ring} configuration, as shown in Figure~\ref{fig:pet_structures}. The data simulation process is as follows:
-\textbf{Starting with real 3D images.} We have high-resolution brain PET data or a synthetic phantom \(\mathbf{X}\in\mathbb{R}^{128\times128\times128}\).
+\subsection{System Model and Data Simulation}
 
-\textbf{Randomly generating emission events.} We sample a specified number of emission events (e.g., 20 million) from the probability density function implied by \(\mathbf{X}\). Each voxel's value is interpreted as proportional to its tracer concentration probability.
+To address these challenges systematically, we developed a comprehensive simulation framework modeling both complete and incomplete PET geometries. Our approach begins with a standard ring configuration of $R$ axial rings (we used $R=42$ in our experiments), each containing $D=182$ detectors arranged cylindrically. The scanner radius ($\rho$) of 253.71 mm balances spatial resolution against sensitivity.
 
-\textbf{Simulating annihilation.} For each emission event, we assume it annihilates with an electron in the same voxel or nearby, producing two photons at 180\(^\circ\) opposite directions, each carrying 511 keV.
-
-\textbf{Calculating detector hits.} Using geometric ray tracing, we calculate which detector pairs would detect these photons. This determines the LOR associated with each event, effectively generating a \emph{list-mode} dataset.
-
-\textbf{Generating sinograms.} We can optionally sort the list-mode data into sinogram bins \(\mathbf{S}\) by radial, angular, and axial coordinates. This generates the standard 3D sinogram representation for PET.
-
-Then, we use standard iterative reconstruction (e.g., OSEM) to reconstruct the baseline reconstruction volume \(\mathbf{Y}_A\) from \(\mathbf{S}\) (or directly from list-mode). This reconstruction from complete data is typically considered higher quality.
 \begin{figure*}[htbp]
     \centering
     \vspace{-0.2cm}
-    \includegraphics[width=0.4\textwidth]{Images/Thehumanbrainismissing5}
-    \includegraphics[width=0.4\textwidth]{Images/Thehumanbrainismissing4}
+    \includegraphics[width=0.24\textwidth]{Images/Thehumanbrainismissing5}
+    \includegraphics[width=0.24\textwidth]{Images/Thehumanbrainismissing4}
+    \includegraphics[width=0.24\textwidth]{Images/Thehumanbrainisnotmissing3}
+    \includegraphics[width=0.24\textwidth]{Images/Thehumanbrainisnotmissing4}
     \vspace{-0.2cm}
-    \caption{Three-dimensional schematic of incomplete ring PET scanner detector structure, with the right image showing a perspective view.}
+    \caption{Three-dimensional schematic of incomplete and complete ring PET scanner detector structure, with the right image showing a perspective view.}
     \vspace{-0.2cm}
     \label{fig:pet_structures2}
 \end{figure*}
-In the \emph{incomplete ring} scenario, we remove parts of the detectors from the scanning geometry. The simplest approach is to remove all detectors from one or more complete rings, or remove angular segments from each ring. For example, suppose we remove one complete ring, so we're effectively only collecting data from \(R-1\) rings. The data simulation process is the same as the complete case, with the only difference being that events falling on the missing ring would not be recorded, as shown in Figure~\ref{fig:pet_structures2}.
 
-Due to missing LORs, the incomplete data reconstructed image \(\mathbf{Y}_B\) typically has lower quality. In practice, we can reconstruct from the incomplete sinogram \(\mathbf{S}_{\text{incomplete}}\), i.e., \(\mathbf{Y}_B = \text{Reconstruct}(\mathbf{S}_{\text{incomplete}})\). This \(\mathbf{Y}_B\) can serve as input to our network, while \(\mathbf{Y}_A\) from complete data (same subject) can serve as the training target. The reconstruction from complete data \(\mathbf{Y}_A\) effectively represents the \emph{ground truth} of the tracer distribution for the same subject under ideal scanning conditions. In low-dose or incomplete coverage scenarios, the difference between \(\mathbf{Y}_B\) and \(\mathbf{Y}_A\) can be quite significant.
+Early in our research, we attempted to use Transformer-based approaches for direct 3D image recovery, following Hatamizadeh et al.'s UNETR framework \cite{hatamizadeh2021unetrtransformers3dmedical}. The initial results seemed promising in controlled simulations, but when applied to our incomplete ring data, these methods collapsed entirely. After weeks of frustrating tuning attempts, we realized the fundamental issue: geometric information alone was insufficient for high-quality reconstruction when large angular segments were missing. The UNETR approach, while powerful for segmentation tasks with complete data, couldn't bridge the fundamental information gaps in our scenario.
 
+This failure forced us to reconsider our entire approach. Rather than attempting direct image-domain recovery, we pivoted to a two-stage method—first converting listmode data to sinograms with missing sections, then applying specialized techniques to complete these sinograms before final reconstruction. This approach, while computationally more intensive, provided a more principled way to address the missing data problem.
 
+For simulation purposes, we mapped a $128\times128\times128$ voxel grid to physical space, yielding in-plane voxel dimensions of approximately 1.95 mm:
 
+\begin{equation}
+\Delta x \approx \Delta y \approx \frac{25\,\text{cm}}{128} \approx 1.95\,\text{mm}.
+\end{equation}
+
+The detector system itself employs a hierarchical structure with parameters that proved challenging to optimize. Table \ref{tab:detector_params} details the key configuration parameters of our PET system.
+
+\begin{table}[htbp]
+    \centering
+    \caption{PET Scanner Configuration Parameters}
+    \label{tab:detector_params}
+    \begin{tabular}{l l}
+    \toprule
+    \textbf{Parameter} & \textbf{Value} \\
+    \midrule
+    Radius & 253.71 mm \\
+    Crystal transaxial spacing & 4.02 mm \\
+    Crystal axial spacing & 5.37 mm \\
+    Module axial spacing & 37.56 mm \\
+    Crystal elements (transaxial) & 13 \\
+    Crystal elements (axial) & 7 \\
+    Transaxial sectors & 28 \\
+    Axial sectors & 1 \\
+    Modules (axial) & 6 \\
+    Crystals per ring & 364 \\
+    Number of rings & 42 \\
+    \bottomrule
+    \end{tabular}
+\end{table}
+
+What the table doesn't convey is how these parameters complicated our modeling efforts. The irregular spacing between detector elements—not quite uniform due to manufacturing tolerances—initially threw off our system matrix calculations. During our first reconstruction attempts, we observed bizarre distortion artifacts that we eventually traced to millimeter-scale discrepancies in detector positioning. These subtle errors propagated through the reconstruction process, creating systematic biases that took us nearly a month to properly correct through careful normalization procedures.
+
+Data acquisition uses list-mode format for maximum flexibility. Our system technically supports time-of-flight detection with 29 time bins, though the practical resolution (approximately 58 mm FWHM) proved disappointing in practice. Based on literature, we had high hopes that TOF would compensate for missing angles, but our experiments revealed minimal benefit at current resolution levels—a frustrating limitation that forced us to rely more heavily on post-processing methods.
+
+A critical challenge we hadn't anticipated was the absence of reliable attenuation correction. Our initial experiments assumed we could derive approximate $\mu$ maps from the emission data itself, but this approach introduced unacceptable artifacts in regions with complex tissue interfaces. Without complementary MRI or CT data, our reconstructions contain uncorrected attenuation artifacts that compromise quantitative accuracy, a limitation that affects both complete and incomplete ring scenarios but particularly complicates the assessment of our methods' performance.
+
+Our simulation process creates both complete and incomplete datasets from the same ground truth images. We begin with high-resolution brain PET volumes ($128^3$ voxels) and generate approximately 20 million emission events according to the tracer distribution. For each event, we simulate annihilation physics and use ray-tracing to determine detector interactions, creating list-mode data that we can optionally convert to sinograms. 
+
+The complete ring configuration (Figure~\ref{fig:pet_structures2}) provides our reference reconstruction $\mathbf{Y}_A$, representing the best-case scenario with full angular sampling. For incomplete ring experiments (Figure~\ref{fig:pet_structures2}), we selectively remove detectors—either entire rings or angular segments—and generate a degraded reconstruction $\mathbf{Y}_B$ from the resulting partial data. The striking quality difference between $\mathbf{Y}_A$ and $\mathbf{Y}_B$ highlights the reconstruction challenge we aim to solve.
 \subsection{Conventional PET Reconstruction Methods}
 
+Before proposing new solutions, we thoroughly evaluated existing reconstruction approaches. \textbf{Analytical methods} like filtered backprojection (FBP) quickly proved inadequate for incomplete data. While computationally efficient, FBP's assumption of complete angular sampling produces severe streak artifacts when confronted with missing sectors. These artifacts aren't merely cosmetic—they can obscure subtle uptake variations that might indicate pathology.
 
-\textbf{Analytical algorithms}, such as \emph{filtered backprojection} (FBP), are widely used for their computational efficiency in fully sampled data. However, FBP is sensitive to noise and incomplete sampling, and prone to severe streak artifacts when the system geometry is incomplete.
+More promising are \textbf{maximum likelihood methods}, particularly MLEM and its faster variant OSEM \cite{363108}. These techniques incorporate the Poisson statistics of photon counting and can accommodate some degree of data incompleteness. The core of these approaches is the \textbf{system model}, which relates image voxels to measured projections:
 
-
-\textbf{Maximum likelihood estimation methods}, such as maximum likelihood expectation maximization (MLEM) and its variant ordered subset expectation maximization (OSEM)\cite{363108}, incorporate Poisson statistics of PET photon counting. They typically produce better results than analytical methods, even with partial data.
-The core idea of OSEM is to divide all projection data $\left\{y_i\right\}$ into $S$ subsets and use only one subset for each update, thus reducing the computational load per update.
-% \begin{equation}
-%     f_j^{(k+1)}=f_j^{(k)} \cdot \frac{\sum_{i \in \text { subset } s} \frac{y_i}{\sum_{j=1}^M p_{i j} f_j^{(k)}} p_{i j}}{\sum_{i \in \text { subset } s} p_{i j}},
-% \end{equation}
-% where $f_j^{(k)}$ is the $j$-th pixel value at the $k$-th iteration, $p_{i j}$ is the system response matrix, and subset $s$ represents the current subset.
-% However, in severely incomplete cases, iterative methods can still produce overly smooth or noisy reconstructions, typically requiring additional priors.
-
-A core concept in PET reconstruction is the \textbf{system model}, which describes the relationship between unknown image voxels and measured projection data. Formally: $\lambda_j$ is the activity value in voxel j; $y_i$ is the count measured in detector pair (or projection) i; $p_{ij}$ is the probability (or "weight") that a photon pair emitted from voxel j is detected by projection i.
-The mathematical model can be represented as:
 \begin{equation}
     y_i \;\approx\; \sum_{j} p_{ij}\,\lambda_j,
 \end{equation}
-The matrix $p_{ij}$ is often called the \textbf{system matrix} or "projection matrix." Each element $p_{ij}$ depends on factors such as geometric solid angle, detector efficiency, and normalization corrections. In program implementation, this matrix can be explicitly stored or calculated on-the-fly through projector/backprojector operations.
 
-% \section*{2. Ordered Subset Expectation Maximization (OSEM) Algorithm}
-Image reconstruction $\lambda_j$ typically uses iterative algorithms such as \textbf{Maximum Likelihood Expectation Maximization (MLEM)}. The update formula for voxel j at the k-th iteration of the MLEM algorithm is:
+Here, $\lambda_j$ represents the activity in voxel $j$, $y_i$ is the count measured in projection $i$, and $p_{ij}$ describes the probability that an emission from voxel $j$ is detected along projection $i$. This \textbf{system matrix} $p_{ij}$ encapsulates all the physics—from detector geometry to attenuation effects—that connects the unknown tracer distribution to our measurements.
+
+MLEM iteratively updates the estimate of $\lambda_j$ according to:
+
 \begin{equation}
     \lambda_j^{(k+1)}
     \;=\;
@@ -271,7 +246,17 @@ Image reconstruction $\lambda_j$ typically uses iterative algorithms such as \te
     \frac{\displaystyle \sum_{i=1}^{N} \frac{p_{ij}}{\sum_{\ell} p_{i\ell}\,\lambda_{\ell}^{(k)}} \; y_i}
     {\displaystyle \sum_{i=1}^{N} p_{ij}}  ,
 \end{equation}
-where $N$ is the total number of projection elements.
+
+While mathematically elegant, MLEM's convergence proves painfully slow for large datasets. OSEM accelerates this process by dividing projections into subsets, updating the image estimate using only one subset at a time:
+
+\begin{equation}
+    \lambda_j^{(k+1)}
+\;=\;
+\lambda_j^{(k)}
+\;\times\;
+\frac{\displaystyle \sum_{i \in S_{k}} \frac{p_{ij}}{\sum_{\ell} p_{i\ell}\,\lambda_{\ell}^{(k)}} \; y_i}
+{\displaystyle \sum_{i \in S_{k}} p_{ij}}
+\end{equation}
 
 \begin{figure*}[htbp]
     \centering
@@ -283,22 +268,11 @@ where $N$ is the total number of projection elements.
     \label{fig:pet_reconstruction}
 \end{figure*}
 
-However, the standard MLEM algorithm converges slowly when processing large datasets. The Ordered Subset Expectation Maximization (OSEM) algorithm accelerates convergence by dividing the projection data into $S$ subsets $S_1,\dots,S_S$. In OSEM implementation, the measurement data $\{y_i\}_{i=1}^N$ is divided into $S$ subsets, each typically containing $N/S$ projection elements. Each update uses only one subset to update $\lambda_j$. A "complete OSEM iteration" is completed after cycling through all subsets.
-Let $S_k$ represent the subset of projection indices used in the k-th iteration, then the OSEM update formula can be expressed as:
-\begin{equation}
-    \lambda_j^{(k+1)}
-\;=\;
-\lambda_j^{(k)}
-\;\times\;
-\frac{\displaystyle \sum_{i \in S_{k}} \frac{p_{ij}}{\sum_{\ell} p_{i\ell}\,\lambda_{\ell}^{(k)}} \; y_i}
-{\displaystyle \sum_{i \in S_{k}} p_{ij}}
-\end{equation}
-By sequentially cycling through these subsets (e.g., using $S_1$ for the 1st iteration, $S_2$ for the 2nd, ..., $S_S$ for the S-th, then returning to $S_1$, and so on), the OSEM algorithm can approximate a complete MLEM update with fewer effective iterations, thus obtaining an image close to convergence in less time.
+Early in our experiments, we discovered that practical implementation matters tremendously. Rather than explicitly storing the massive system matrix, modern software calculates projections on-the-fly using matched projector/backprojector pairs. We based our work on the PyTomography library \cite{POLSON2025102020}, which leverages PyTorch's GPU acceleration to handle the computational burden. This choice proved crucial when processing the enormous datasets generated by our simulations.
 
-In modern PET software frameworks, the system matrix $p_{ij}$ is typically not stored as a large two-dimensional array, but is implicitly calculated through \textbf{projectors} and \textbf{backprojectors}. For each voxel j, the projector calculates its contribution to the measurement data $y_i$; the backprojector assigns the ratio of measured to expected data back to the voxel grid. This approach effectively reduces memory requirements when processing large volumes of data.
+Figure~\ref{fig:pet_reconstruction} shows a comparison between original and OSEM-reconstructed images using complete data. While OSEM performs adequately with full angular sampling, its performance with incomplete rings proved disappointing. The missing angles create fundamental information gaps that iterative methods struggle to bridge, despite their statistical sophistication. 
 
-The algorithms described in this paper are based on the PyTomography library\cite{POLSON2025102020}. PyTomography is an open-source Python library for medical image reconstruction, providing a modular framework for system matrix construction, likelihood function computation, and reconstruction algorithm development. The library leverages PyTorch's GPU acceleration capabilities and the parallelproj library for efficient parallel computation. Its flexible modular design makes it easy to decouple system matrices, likelihood functions, and reconstruction algorithms, facilitating integration with various Python toolsets for new imaging modalities. Currently, the library has been successfully applied in fields such as parallel-hole SPECT and list-mode PET imaging, providing a highly optimized and user-friendly software platform for medical image reconstruction. We tested it using a brain PET dataset, and the comparison between the original image and the reconstructed image is shown in Figure~\ref{fig:pet_reconstruction}.
-
+These limitations of conventional methods—analytical approaches failing completely and iterative techniques providing only marginal improvements—motivated our exploration of learning-based approaches that could potentially infer missing information based on structural and statistical patterns in PET data.
 
 % \textbf{Initialization}: The image estimate $\lambda_j^{(0)}$ is typically initialized to a uniform value, or using a transmission image if available.
 % \textbf{Regularization}: Pure OSEM algorithms may amplify noise, especially after multiple iterations. In practice, methods such as \textbf{post-smoothing} or \textbf{penalized likelihood} (adding spatial priors) are often used to control noise and obtain clearer images.
@@ -539,7 +513,7 @@ where $X$ and $\hat{X}$ are the original and reconstructed images respectively. 
 \begin{figure*}[htbp]
     \centering
     \vspace{-0.2cm}
-    \includegraphics[width=0.9\textwidth]{Images/output2}
+    \includegraphics[width=0.7\textwidth]{Images/output2}
     \vspace{-0.2cm}
     \caption{Comparison of reconstruction results from incomplete rings with the original image, showing that the two are vastly different, demonstrating that direct reconstruction from incomplete rings is not feasible.}
     \vspace{-0.2cm}
