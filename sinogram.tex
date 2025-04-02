@@ -69,18 +69,9 @@ prd,
 
 \preprint{APS/123-QED}
 
-\title{The study of non-complete-ring positron emission tomography (PET) detection method}% Force line breaks with \\
-%\thanks{A footnote to the article title}%
+\title{Non-complete-ring positron emission tomography (PET) detection method}
 
-% \author{Yeqi Fang$^{1}$}
-% \email{fangyeqi@stu.scu.edu.cn}
-% \author{Wei Hong$^{2}$}
-% \email{weihong@mail.bnu.edu.cn}
-% \author{Jun Tao$^{1}$}
-% \email{taojun@scu.edu.cn, corresponding author}
 
-% \affiliation{$^{1}$Center for Theoretical Physics, College of Physics, Sichuan University, Chengdu, 610065, China}
-% \affiliation{$^{2}$Department of Astronomy, Beijing Normal University, Beijing 100875, People's Republic of China}
 \author{Yeqi Fang}
 \email{fangyeqi@stu.scu.edu.cn}
 \affiliation{College of Physics, Sichuan University, Chengdu, 610065, China}
@@ -105,25 +96,22 @@ prd,
 
 %\tableofcontents
 
-%!TEX root = ../Manual.tex
 \section{Introduction}
 \label{chap:introduction}
 
 \subsection{Background and Motivation}
 
+Positron emission tomography (PET) stands as a powerful molecular imaging technique, offering quantitative visualization of metabolic processes within living tissue \cite{townsend2004}. The fundamental principle is elegant yet complex: a radiotracer introduces positrons that, upon encountering electrons, annihilate and produce pairs of $511$keV photons traveling in opposing directions. These photon pairs are captured by scintillation detectors arranged in a ring, with each coincident detection marking a line-of-response (LOR). Traditional PET systems rely on complete 360$^\circ$ detector rings to maximize sensitivity and provide uniform angular coverage \cite{townsend2004}.
 
-Positron emission tomography (PET) is a molecular imaging modality that provides quantitative in vivo visualization of metabolic processes  \cite{townsend2004}. In PET, a radiotracer decays by positron emission; each positron annihilates with an electron to produce a pair of $511$keV photons traveling in nearly opposite directions. These annihilation photons are detected in coincidence by a ring of scintillation detectors, with each coincident detection defining a line-of-response (LOR). Conventional PET scanners employ a complete 360$^\circ$ detector ring to maximize sensitivity and ensure uniform angular coverage  \cite{townsend2004}.
+But what happens when a complete ring isn't feasible? This question has driven the development of incomplete-ring PET systems. Such systems have emerged from practical necessity rather than theoretical preference: they reduce costs and complexity, allow closer access to patients in specialized applications like breast scanning \cite{surti2008}, create "open" configurations that alleviate claustrophobia \cite{tashima2012, krishnamoorthy2021}, and enable novel applications such as dual-panel brain imaging systems \cite{zhang2020}. The trade-off is severe—incomplete angular coverage creates gaps in projection data, turning reconstruction into an underdetermined problem. Missing angular views inevitably introduce artifacts and resolution non-uniformity \cite{kak1988, surti2008}. Even time-of-flight capabilities, which partially mitigate these issues, can't fully compensate for limited view angles \cite{surti2008, krishnamoorthy2021}.
 
-However, building full-ring PET scanners may sometimes be impractical. \textbf{Incomplete-ring PET systems} have been developed for various practical reasons: reducing cost and complexity, allowing closer patient access in dedicated breast scanners  \cite{surti2008}, creating "open" configurations for interventions or reducing claustrophobia  \cite{tashima2012, krishnamoorthy2021}, and enabling specialized applications like dual-panel systems for brain imaging  \cite{zhang2020}. While these systems expand PET's utility, the incomplete angular coverage leads to missing projection data and an underdetermined reconstruction problem. Classical tomographic theory dictates that missing angular views introduce artifacts and non-uniform resolution  \cite{kak1988, surti2008}. Even with time-of-flight capabilities that partially compensate for limited view angles  \cite{surti2008, krishnamoorthy2021}, incomplete-ring PET data remain challenging to reconstruct with high fidelity.
+Researchers have pursued various paths to address incomplete-ring PET reconstruction. Analytical methods like filtered back-projection falter immediately—their assumption of complete data leads to pronounced streak artifacts \cite{kak1988}. Iterative approaches such as maximum-likelihood expectation-maximization (MLEM) fare somewhat better by modeling the acquisition process \cite{qi2006}, yet they still struggle with artifacts along missing view directions \cite{zhang2020}. Penalized likelihood methods incorporating prior constraints show promise, as Zhang \textit{et al.} demonstrated by using high-quality prior images to enhance contrast recovery in a dual-panel head-and-neck PET system \cite{zhang2020}. But these methods still fall short of solving the fundamental problem.
 
-Multiple reconstruction approaches have been investigated for incomplete-ring PET. Analytical methods like filtered back-projection assume complete data and produce pronounced streak artifacts with incomplete rings  \cite{kak1988}. Iterative reconstruction algorithms such as maximum-likelihood expectation-maximization (MLEM) better accommodate incomplete data by modeling the acquisition process  \cite{qi2006}, but still suffer from artifacts along missing view directions  \cite{zhang2020}. Penalized likelihood methods incorporating prior constraints can reduce these artifacts, as demonstrated by Zhang \textit{et al.} using a high-quality prior image to improve contrast recovery in a dual-panel head-and-neck PET system  \cite{zhang2020}.
+Deep learning has brought fresh perspectives to this challenge, though with mixed results. Regression-based networks have shown potential in low-dose PET denoising and partial data reconstruction \cite{Kandarpa_2021} by learning direct mappings between degraded and high-quality images. Liu \textit{et al.}'s U-Net approach to transform artifact-degraded partial-ring PET images \cite{liu2019} demonstrated initial success, but conventional CNNs struggle with the global features needed to address large-scale angular losses. 
 
-In recent years, deep learning techniques have emerged as powerful tools for PET reconstruction. Regression-based networks have shown effectiveness in tasks such as low-dose PET denoising and partial data reconstruction  \cite{Kandarpa_2021}, learning direct mappings from degraded to high-quality images. Liu \textit{et al.} demonstrated that a U-Net architecture could transform artifact-degraded partial-ring PET images into more complete images  \cite{liu2019}, though CNNs often struggle with global features when facing large-scale angular losses. 
-Unsupervised and physics-guided methods like Shan \textit{et al.}'s deep image prior approach can optimize a network to match measured projections without external training pairs  \cite{shan2024}. GAN-based methods generate visually reasonable images by inferring missing structures  \cite{xue2023cg3dsrganclassificationguided3d}, though training instability and quantitative accuracy remain concerns. Likelihood-based generative models like VAEs and normalizing flows operate within a more rigorous theoretical framework but often produce blurry results with high computational complexity. Advanced approaches including model-based deep learning frameworks and generative models have shown promise for enhancing PET reconstructions  \cite{reader2023, vashistha2024}, but must be applied carefully to ensure no clinically important detail is hallucinated or lost.
+Current solutions present a troubling set of compromises. Unsupervised and physics-guided methods like Shan \textit{et al.}'s deep image prior approach \cite{shan2024} can match measured projections without external training pairs, but often at the cost of generalizability. GAN-based methods can produce visually plausible images \cite{xue2023cg3dsrganclassificationguided3d}, but their training instability and questionable quantitative accuracy limit clinical application. Likelihood-based generative models like VAEs and normalizing flows offer theoretical rigor but typically produce blurry results while demanding excessive computation. Model-based deep learning frameworks and generative models \cite{reader2023, vashistha2024} show promise but risk introducing hallucinated features—a dangerous proposition in medical imaging.
 
-Despite these advances, significant challenges persist for incomplete-ring PET imaging due to fundamental \textbf{information loss}. Analytical methods cannot adequately handle data deficiency, over-regularized iterative methods might erase subtle features, and deep learning models risk introducing bias. Current approaches either cannot effectively handle large-scale data loss, have excessive computational overhead, or struggle to maintain the detailed features required for clinical diagnosis. In response, this thesis proposes an innovative coarse-to-fine diffusion model framework that is computationally efficient, stable in performance, and optimized specifically for incomplete ring PET scanners, aiming to recover missing angular information and suppress reconstruction artifacts without sacrificing true image detail.
-
-
+The core challenge remains unsolved: fundamental \textbf{information loss}. Analytical methods collapse under data deficiency, over-regularized iterative methods blur subtle features, and deep learning models risk introducing misleading artifacts. Current approaches fail in at least one critical dimension—they can't handle severe data loss, require unrealistic computational resources, or compromise the detailed features that clinicians depend on for diagnosis. This thesis tackles these limitations head-on with a coarse-to-fine diffusion model framework designed specifically for incomplete ring PET scanners. Our approach aims to recover missing angular information while suppressing reconstruction artifacts, preserving the true image details that matter most in clinical practice.
 
 \begin{figure}[htbp]
 	\centering
@@ -132,9 +120,6 @@ Despite these advances, significant challenges persist for incomplete-ring PET i
 	\label{fig:graph}
 \end{figure}
 
-
-
-
 % \subsection{Thesis Organization}
 The remainder of this thesis is organized as follows:
 
@@ -142,14 +127,13 @@ The remainder of this thesis is organized as follows:
 
 \textbf{Section \ref{chap:methods}} (\emph{Fundamentals of Diffusion Probabilistic Models}) details the background of Denoising Diffusion Probabilistic Models (DDPM) and how they apply to various image reconstruction tasks, establishing the theoretical foundation for our proposed method. \emph{Proposed Coarse-to-Fine Reconstruction Framework}) describes the detailed workflow of our method, including complete and incomplete ring geometric modeling, creation of list-mode and sinogram data, the coarse-to-fine design, auxiliary guidance modules, contrastive diffusion learning objectives, and implementation details.
 
-\textbf{Section \ref{chap:results}} (\emph{Experiments and Results}) presents our extensive experimental setups, hyperparameter choices, evaluation metrics, ablation studies, and comparisons with state-of-the-art methods. We also present results of cross-dataset evaluation on in-house datasets.
+\textbf{Section \ref{chap:results}} (\emph{Experiments and Results}) presents our experimental setups, hyperparameter choices, evaluation metrics, ablation studies, and comparisons with state-of-the-art methods. We also present results of cross-dataset evaluation on in-house datasets.
 
 \textbf{Section \ref{chap:conclusion}} (\emph{Conclusion and Future Work}) summarizes our findings, discusses limitations, and suggests directions for future research, including potential improvements for real-world incomplete ring PET scanners.
 
 \textbf{Appendices} provide additional experiments, extended qualitative results, and tables of hyperparameters used in the thesis.
 
 % \section{APPENDIX}\label{appendix:model}
-
 %!TEX root = ../Manual.tex
 \section{Background on PET Imaging and Incomplete Ring Geometry}
 \label{chap:background}
@@ -157,13 +141,13 @@ The remainder of this thesis is organized as follows:
 
 This section provides a brief but comprehensive overview of the fundamental aspects of PET imaging, focusing on the detection process, data acquisition methods, and conventional reconstruction algorithms. We then discuss incomplete ring PET scanners in detail, highlighting the geometry of missing detectors, their impact on data quality, and current solutions and unresolved research challenges.
 
-\subsection{Principles of PET Imaging}
+% \subsection{Principles of PET Imaging}
 In PET imaging, positron-emitting nuclides (typically $^{18}\text{F}$, $^{15}\text{O}$, $^{11}\text{C}$, etc.) are usually combined with biologically relevant tracer compounds. After entering the bloodstream, these nuclides decay, with each emitting a positron. When the positron encounters an electron, an annihilation event occurs, producing two gamma photons, each with an energy of approximately 511 keV, traveling in nearly opposite directions (collinearly).
 
 \begin{figure*}[htbp]
     \centering
     \vspace{-0.2cm}
-    \includegraphics[width=0.98\textwidth]{Images/Screenshot2025-02-07214940}
+    \includegraphics[width=0.9\textwidth]{Images/Screenshot2025-02-07214940}
     \vspace{-0.2cm}
     \caption{Schematic diagram of PET detection, where the red dot represents the detector center, the green dot represents the annihilation event location, and the two blue dots represent the centers of the two detectors that detect the gamma rays. This figure is only illustrative; the detector parameters in the figure do not equal the actual simulation parameters.}
     \vspace{-0.2cm}
@@ -182,6 +166,78 @@ In normal PET (Positron Emission Tomography) system design, \emph{incomplete rin
 
 
 The main difficulty with incomplete rings is the reduction in angular sampling, as missing detectors lead to missing corresponding LORs, making the dataset incomplete, which breaks the fundamental assumptions of many classical reconstruction algorithms that rely on fully sampled complete angular projections. This data deficiency leads to a series of issues: producing streak artifacts and increased noise in the image domain, causing quantitative inaccuracies in tracer uptake (especially in regions that depend on missing LORs), and potentially introducing biases in clinical indices such as standardized uptake values (SUVs), thereby affecting diagnostic accuracy, as shown in Figure~\ref{fig:pet_incomplete_reconstruction}.
+
+
+\subsection{System Model and Data Simulation}
+Assume a standard PET ring geometry with \(R\) axial rings, each containing \(D\) detectors, with each detector assigned a unique identification number used to precisely locate the photon pair's detection position when recording coincidence events. For example, consider a 42-ring system (i.e., \(R=42\)), with 182 detectors per ring, arranged in a cylindrical structure with radius \(\rho\). We map the 3D image grid (e.g., \(\text{size}=128\times128\times128\) voxels) to physical space by defining voxel dimensions, approximating the entire scanner geometry realistically. For instance, if the field of view diameter is 25 centimeters and the in-plane matrix size is 128, then each in-plane voxel size is:
+\begin{equation}
+\Delta x \approx \Delta y \approx \frac{25\,\text{cm}}{128} \approx 1.95\,\text{mm}.
+\end{equation}
+Axially, we can set \(\Delta z\) based on the typical axial coverage of a PET scanner. This high-precision spatial division ensures that the reconstructed images accurately reflect the anatomical structure of the scanned area.
+
+The PET scanner used in this study employs a highly optimized detector system configuration, achieving comprehensive three-dimensional detection capabilities. The scanner's radius ($\rho$) is precisely set at 380.56 millimeters, achieving an optimal balance between spatial resolution and system sensitivity. The detector system adopts a multi-level organizational structure: at the microscopic level, crystal elements have lateral dimensions of 4.03125 millimeters and axial dimensions of 5.31556 millimeters, with this precise crystal size design ensuring high spatial resolution capability; at the macroscopic level, the detector construction includes 34 lateral sectors (rsectorTransNr) and a single axial sector arrangement (rsectorAxialNr). Each module is carefully designed to include 16 lateral (crystalTransNr) and 9 axial (crystalAxialNr) crystal elements, with the spacing between adjacent crystals (crystalTransSpacing and crystalAxialSpacing) optimized to achieve maximum detection efficiency. In the axial direction, the system has 4 modules (moduleAxialNr), maintaining a precise spacing of 50.64004 millimeters between modules (moduleAxialSpacing), a configuration that ensures detection sensitivity while maintaining an appropriate axial field of view range.
+% \begin{figure*}[htbp]
+%     \centering
+%     \vspace{-0.2cm}
+%     \includegraphics[width=0.7\textwidth]{Images/pet-side-view}
+%     \vspace{-0.2cm}
+%     \caption{Side view schematic of PET scanner detector structure.}
+%     \vspace{-0.2cm}
+%     \label{fig:pet_structures_side}
+% \end{figure*}
+The system's data recording uses a list-mode format to record various coincidence events during the scanning process. The system supports time-of-flight (TOF) detection functionality, with 29 time bins (num\_tof\_bins), a full width at half maximum of the time resolution window (tof\_fwhm) of 57.71 millimeters, and a measurement range (tof\_range) reaching 735.7705 millimeters. However, due to current device performance limitations, this study could not fully utilize TOF technology to improve spatial resolution. Each event entry consists of three basic components, stored in tensor format. A typical list-mode event data structure is as follows:
+
+\begin{verbatim}
+[898, 3334, 11]
+[816, 16375, 18]
+[1073, 18816, 14]
+[1529, 13781, 13]
+[1537, 18663, 14]
+\end{verbatim}
+
+In this format, the first two numbers represent the identification numbers of the detector pair recording the coincidence event. The third number represents the time-of-flight information of the event, which, although not fully utilized in this study to enhance image quality, is retained for future data processing and analysis after system upgrades. To improve the system's sensitivity and accuracy, the detector system also includes submodule structures (submoduleAxialNr and submoduleTransNr both equal to 1), but in the current configuration, the submodule spacing (submoduleAxialSpacing and submoduleTransSpacing) is set to 0 to simplify system complexity.
+
+In the current implementation process, due to the lack of MRI or CT data to obtain gamma ray absorption distribution maps, the system cannot use $\mu$ maps (linear attenuation maps) or component-based normalization files. This limitation means that the reconstruction process can only use list-mode data as input and cannot perform attenuation correction. When interpreting reconstruction results, this limitation's impact on image quality and quantitative accuracy must be considered.
+
+\begin{figure*}[htbp]
+\centering
+\vspace{-0.2cm}
+\includegraphics[width=0.4\textwidth]{Images/Thehumanbrainisnotmissing3}
+\includegraphics[width=0.4\textwidth]{Images/Thehumanbrainisnotmissing4}
+\vspace{-0.2cm}
+\caption{Three-dimensional schematic of PET scanner detector structure, with the right image showing a perspective view.}
+\vspace{-0.2cm}
+\label{fig:pet_structures}
+\end{figure*}
+
+
+
+We refer to the fully functional scenario where all \(R\) rings and all \(D\) detectors are working as the \emph{complete ring} configuration, as shown in Figure~\ref{fig:pet_structures}. The data simulation process is as follows:
+\textbf{Starting with real 3D images.} We have high-resolution brain PET data or a synthetic phantom \(\mathbf{X}\in\mathbb{R}^{128\times128\times128}\).
+
+\textbf{Randomly generating emission events.} We sample a specified number of emission events (e.g., 20 million) from the probability density function implied by \(\mathbf{X}\). Each voxel's value is interpreted as proportional to its tracer concentration probability.
+
+\textbf{Simulating annihilation.} For each emission event, we assume it annihilates with an electron in the same voxel or nearby, producing two photons at 180\(^\circ\) opposite directions, each carrying 511 keV.
+
+\textbf{Calculating detector hits.} Using geometric ray tracing, we calculate which detector pairs would detect these photons. This determines the LOR associated with each event, effectively generating a \emph{list-mode} dataset.
+
+\textbf{Generating sinograms.} We can optionally sort the list-mode data into sinogram bins \(\mathbf{S}\) by radial, angular, and axial coordinates. This generates the standard 3D sinogram representation for PET.
+
+Then, we use standard iterative reconstruction (e.g., OSEM) to reconstruct the baseline reconstruction volume \(\mathbf{Y}_A\) from \(\mathbf{S}\) (or directly from list-mode). This reconstruction from complete data is typically considered higher quality.
+\begin{figure*}[htbp]
+    \centering
+    \vspace{-0.2cm}
+    \includegraphics[width=0.4\textwidth]{Images/Thehumanbrainismissing5}
+    \includegraphics[width=0.4\textwidth]{Images/Thehumanbrainismissing4}
+    \vspace{-0.2cm}
+    \caption{Three-dimensional schematic of incomplete ring PET scanner detector structure, with the right image showing a perspective view.}
+    \vspace{-0.2cm}
+    \label{fig:pet_structures2}
+\end{figure*}
+In the \emph{incomplete ring} scenario, we remove parts of the detectors from the scanning geometry. The simplest approach is to remove all detectors from one or more complete rings, or remove angular segments from each ring. For example, suppose we remove one complete ring, so we're effectively only collecting data from \(R-1\) rings. The data simulation process is the same as the complete case, with the only difference being that events falling on the missing ring would not be recorded, as shown in Figure~\ref{fig:pet_structures2}.
+
+Due to missing LORs, the incomplete data reconstructed image \(\mathbf{Y}_B\) typically has lower quality. In practice, we can reconstruct from the incomplete sinogram \(\mathbf{S}_{\text{incomplete}}\), i.e., \(\mathbf{Y}_B = \text{Reconstruct}(\mathbf{S}_{\text{incomplete}})\). This \(\mathbf{Y}_B\) can serve as input to our network, while \(\mathbf{Y}_A\) from complete data (same subject) can serve as the training target. The reconstruction from complete data \(\mathbf{Y}_A\) effectively represents the \emph{ground truth} of the tracer distribution for the same subject under ideal scanning conditions. In low-dose or incomplete coverage scenarios, the difference between \(\mathbf{Y}_B\) and \(\mathbf{Y}_A\) can be quite significant.
+
 
 
 \subsection{Conventional PET Reconstruction Methods}
@@ -220,7 +276,7 @@ where $N$ is the total number of projection elements.
 \begin{figure*}[htbp]
     \centering
     \vspace{-0.2cm}
-    \includegraphics[width=0.98\textwidth]{Images/output}
+    \includegraphics[width=0.9\textwidth]{Images/output}
     \vspace{-0.2cm}
     \caption{Comparison of original image and image reconstructed using the OSEM method}
     \vspace{-0.2cm}
@@ -269,81 +325,12 @@ As shown in Figure \ref{fig:reconstruction_workflow}, this study proposes an inn
 
 % \subsection{U-net Deep Learning Model}
 
-\subsection{System Model and Data Simulation}
-Assume a standard PET ring geometry with \(R\) axial rings, each containing \(D\) detectors, with each detector assigned a unique identification number used to precisely locate the photon pair's detection position when recording coincidence events. For example, consider a 42-ring system (i.e., \(R=42\)), with 182 detectors per ring, arranged in a cylindrical structure with radius \(\rho\). We map the 3D image grid (e.g., \(\text{size}=128\times128\times128\) voxels) to physical space by defining voxel dimensions, approximating the entire scanner geometry realistically. For instance, if the field of view diameter is 25 centimeters and the in-plane matrix size is 128, then each in-plane voxel size is:
-\begin{equation}
-\Delta x \approx \Delta y \approx \frac{25\,\text{cm}}{128} \approx 1.95\,\text{mm}.
-\end{equation}
-Axially, we can set \(\Delta z\) based on the typical axial coverage of a PET scanner. This high-precision spatial division ensures that the reconstructed images accurately reflect the anatomical structure of the scanned area.
-
-The PET scanner used in this study employs a highly optimized detector system configuration, achieving comprehensive three-dimensional detection capabilities. The scanner's radius ($\rho$) is precisely set at 380.56 millimeters, achieving an optimal balance between spatial resolution and system sensitivity. The detector system adopts a multi-level organizational structure: at the microscopic level, crystal elements have lateral dimensions of 4.03125 millimeters and axial dimensions of 5.31556 millimeters, with this precise crystal size design ensuring high spatial resolution capability; at the macroscopic level, the detector construction includes 34 lateral sectors (rsectorTransNr) and a single axial sector arrangement (rsectorAxialNr). Each module is carefully designed to include 16 lateral (crystalTransNr) and 9 axial (crystalAxialNr) crystal elements, with the spacing between adjacent crystals (crystalTransSpacing and crystalAxialSpacing) optimized to achieve maximum detection efficiency. In the axial direction, the system has 4 modules (moduleAxialNr), maintaining a precise spacing of 50.64004 millimeters between modules (moduleAxialSpacing), a configuration that ensures detection sensitivity while maintaining an appropriate axial field of view range.
-\begin{figure*}[htbp]
-    \centering
-    \vspace{-0.2cm}
-    \includegraphics[width=0.7\textwidth]{Images/pet-side-view}
-    \vspace{-0.2cm}
-    \caption{Side view schematic of PET scanner detector structure.}
-    \vspace{-0.2cm}
-    \label{fig:pet_structures_side}
-\end{figure*}
-The system's data recording uses a list-mode format to record various coincidence events during the scanning process. The system supports time-of-flight (TOF) detection functionality, with 29 time bins (num\_tof\_bins), a full width at half maximum of the time resolution window (tof\_fwhm) of 57.71 millimeters, and a measurement range (tof\_range) reaching 735.7705 millimeters. However, due to current device performance limitations, this study could not fully utilize TOF technology to improve spatial resolution. Each event entry consists of three basic components, stored in tensor format. A typical list-mode event data structure is as follows:
-
-\begin{verbatim}
-[898, 3334, 11]
-[816, 16375, 18]
-[1073, 18816, 14]
-[1529, 13781, 13]
-[1537, 18663, 14]
-\end{verbatim}
-
-In this format, the first two numbers represent the identification numbers of the detector pair recording the coincidence event. The third number represents the time-of-flight information of the event, which, although not fully utilized in this study to enhance image quality, is retained for future data processing and analysis after system upgrades. To improve the system's sensitivity and accuracy, the detector system also includes submodule structures (submoduleAxialNr and submoduleTransNr both equal to 1), but in the current configuration, the submodule spacing (submoduleAxialSpacing and submoduleTransSpacing) is set to 0 to simplify system complexity.
-
-In the current implementation process, due to the lack of MRI or CT data to obtain gamma ray absorption distribution maps, the system cannot use $\mu$ maps (linear attenuation maps) or component-based normalization files. This limitation means that the reconstruction process can only use list-mode data as input and cannot perform attenuation correction. When interpreting reconstruction results, this limitation's impact on image quality and quantitative accuracy must be considered.
-
-\begin{figure*}[htbp]
-\centering
-\vspace{-0.2cm}
-\includegraphics[width=0.45\textwidth]{Images/Thehumanbrainisnotmissing3}
-\includegraphics[width=0.45\textwidth]{Images/Thehumanbrainisnotmissing4}
-\vspace{-0.2cm}
-\caption{Three-dimensional schematic of PET scanner detector structure, with the right image showing a perspective view.}
-\vspace{-0.2cm}
-\label{fig:pet_structures}
-\end{figure*}
-
-
-
-We refer to the fully functional scenario where all \(R\) rings and all \(D\) detectors are working as the \emph{complete ring} configuration, as shown in Figure~\ref{fig:pet_structures}. The data simulation process is as follows:
-\textbf{Starting with real 3D images.} We have high-resolution brain PET data or a synthetic phantom \(\mathbf{X}\in\mathbb{R}^{128\times128\times128}\).
-
-\textbf{Randomly generating emission events.} We sample a specified number of emission events (e.g., 20 million) from the probability density function implied by \(\mathbf{X}\). Each voxel's value is interpreted as proportional to its tracer concentration probability.
-
-\textbf{Simulating annihilation.} For each emission event, we assume it annihilates with an electron in the same voxel or nearby, producing two photons at 180\(^\circ\) opposite directions, each carrying 511 keV.
-
-\textbf{Calculating detector hits.} Using geometric ray tracing, we calculate which detector pairs would detect these photons. This determines the LOR associated with each event, effectively generating a \emph{list-mode} dataset.
-
-\textbf{Generating sinograms.} We can optionally sort the list-mode data into sinogram bins \(\mathbf{S}\) by radial, angular, and axial coordinates. This generates the standard 3D sinogram representation for PET.
-
-Then, we use standard iterative reconstruction (e.g., OSEM) to reconstruct the baseline reconstruction volume \(\mathbf{Y}_A\) from \(\mathbf{S}\) (or directly from list-mode). This reconstruction from complete data is typically considered higher quality.
-\begin{figure*}[htbp]
-    \centering
-    \vspace{-0.2cm}
-    \includegraphics[width=0.45\textwidth]{Images/Thehumanbrainismissing5}
-    \includegraphics[width=0.45\textwidth]{Images/Thehumanbrainismissing4}
-    \vspace{-0.2cm}
-    \caption{Three-dimensional schematic of incomplete ring PET scanner detector structure, with the right image showing a perspective view.}
-    \vspace{-0.2cm}
-    \label{fig:pet_structures2}
-\end{figure*}
-In the \emph{incomplete ring} scenario, we remove parts of the detectors from the scanning geometry. The simplest approach is to remove all detectors from one or more complete rings, or remove angular segments from each ring. For example, suppose we remove one complete ring, so we're effectively only collecting data from \(R-1\) rings. The data simulation process is the same as the complete case, with the only difference being that events falling on the missing ring would not be recorded, as shown in Figure~\ref{fig:pet_structures2}.
-
-Due to missing LORs, the incomplete data reconstructed image \(\mathbf{Y}_B\) typically has lower quality. In practice, we can reconstruct from the incomplete sinogram \(\mathbf{S}_{\text{incomplete}}\), i.e., \(\mathbf{Y}_B = \text{Reconstruct}(\mathbf{S}_{\text{incomplete}})\). This \(\mathbf{Y}_B\) can serve as input to our network, while \(\mathbf{Y}_A\) from complete data (same subject) can serve as the training target. The reconstruction from complete data \(\mathbf{Y}_A\) effectively represents the \emph{ground truth} of the tracer distribution for the same subject under ideal scanning conditions. In low-dose or incomplete coverage scenarios, the difference between \(\mathbf{Y}_B\) and \(\mathbf{Y}_A\) can be quite significant.
 
 \subsection{Sinogram Reconstruction Based on Attention U-Net}
 
 Although traditional U-Net performs excellently in medical image segmentation and reconstruction tasks, it lacks the ability to selectively focus on key features when dealing with complex incomplete ring PET sinogram restoration problems. The Attention U-Net adopted in this study enhances the model's perception of important feature regions through spatial attention mechanisms while suppressing the influence of irrelevant features, which is crucial for restoring sinograms from incomplete data.
 
-The core innovation of Attention U-Net lies in the introduction of attention gating (AG) modules in the skip connection path of the standard U-Net, as shown in Figure 3.7. These AG modules can adaptively highlight significant structures in the feed-forward feature maps while suppressing irrelevant regions that might lead to prediction errors. For sinogram reconstruction tasks, this mechanism is particularly effective because it can selectively focus on structural features around missing areas, thereby more accurately inferring missing angular data. The mathematical expression of attention gating can be formalized as:
+The core innovation of Attention U-Net lies in the introduction of attention gating (AG) modules in the skip connection path of the standard U-Net, as shown in Figure~\ref{fig:unet_structure}. These AG modules can adaptively highlight significant structures in the feed-forward feature maps while suppressing irrelevant regions that might lead to prediction errors. For sinogram reconstruction tasks, this mechanism is particularly effective because it can selectively focus on structural features around missing areas, thereby more accurately inferring missing angular data. The mathematical expression of attention gating can be formalized as:
 
 \begin{equation}
 \alpha_i^l = \sigma_2(\psi^T(\sigma_1(W_x^T x_i^l + W_g^T g_i + b_g)) + b_\psi)
@@ -361,7 +348,7 @@ This mechanism allows Attention U-Net to adaptively focus on important image reg
 \begin{figure*}[htbp]
     \centering
     \vspace{-.2cm}
-    \includegraphics[width=0.8\textwidth]{Images/Unet.png}
+    \includegraphics[width=0.7\textwidth]{Images/Unet.png}
     \vspace{-.3cm}
     \caption{Attention U-Net architecture diagram, showing how the attention gating mechanism enhances skip connection features.}
     \label{fig:unet_structure}
@@ -394,227 +381,149 @@ Model training uses the Adam optimizer with an initial learning rate of $10^{-4}
 On the validation set, the model achieved excellent performance with MSE=0.301745, PSNR=35.6421 dB, and SSIM=0.9588. The PSNR value indicates high fidelity of the reconstructed signal, while the SSIM metric validates the preservation of structural features. Experimental results show that the multi-channel U-Net method proposed in this paper can effectively improve sinogram repair quality, providing a reliable foundation for subsequent CT image reconstruction. This method significantly improves the limitations of traditional single-channel models by fusing spatiotemporal context information, offering a new technical approach for the medical imaging processing field.
 
 
-
-
 \subsection{Diffusion Probabilistic Models}
-Diffusion probabilistic models (DPMs) have attracted great attention in image synthesis and inverse problems for their ability to produce state-of-the-art results and training stability. Unlike GANs that rely on adversarial objectives, DPMs are trained by maximizing a variational lower bound on the data log-likelihood. This chapter covers the core principles and mathematical formulations of denoising diffusion probabilistic models relevant to the proposed method.
-Diffusion models are a class of probabilistic generative models proposed by \textit{Sohl-Dickstein et al.}\cite{pmlr-v37-sohl-dickstein15}, and later widely applied in image generation tasks by \textit{Ho et al.}\cite{ho2020denoisingdiffusionprobabilisticmodels}. The basic idea is to gradually inject noise into the data distribution, transforming it into an isotropic Gaussian distribution. In the generation stage, the target data distribution is gradually restored from pure noise through a learned reverse denoising process. This framework can be divided into two main stages:
-\textbf{Forward Process}: Gradually adding noise to the data, making the data distribution approach a Gaussian distribution;
-\textbf{Reverse Process}: Starting from Gaussian noise, gradually denoising to generate samples consistent with the original data.
-Diffusion models have achieved significant results in image, speech, text, and other fields, with their stability and generation quality attracting widespread attention.
+Diffusion probabilistic models (DPMs) have attracted great attention in image synthesis and inverse problems for their ability to produce state-of-the-art results and training stability. Unlike GANs that rely on adversarial objectives, DPMs are trained by maximizing a variational lower bound on the data log-likelihood. This section introduces the core principles of denoising diffusion probabilistic models relevant to our reconstruction approach.
 
-\subsubsection{Forward Process}
-The forward process gradually adds noise to the data $\mathbf{x}_0 \in \mathbb{R}^d$ through a Markov chain, mathematically expressed as:
-\begin{equation}
-    q(\mathbf{x}_{1:T} \mid \mathbf{x}_0) = \prod_{t=1}^T q(\mathbf{x}_t \mid \mathbf{x}_{t-1}),
-\end{equation}
-where each step's conditional probability is defined as:
-\begin{equation}
-    q(\mathbf{x}_t \mid \mathbf{x}_{t-1}) = \mathcal{N}(\mathbf{x}_t; \sqrt{1 - \beta_t} \mathbf{x}_{t-1}, \beta_t \mathbf{I}).
-\end{equation}
-Here, $\beta_t \in (0, 1)$ represents the noise intensity, a predetermined hyperparameter controlling the amount of noise added in each step.
-Since the noise added at each step is a linear combination of Gaussian distributions, $\mathbf{x}_t$ can be directly calculated from $\mathbf{x}_0$. Using the properties of Gaussian distributions, we have:
-\begin{equation}
-    q(\mathbf{x}_t \mid \mathbf{x}_0) = \mathcal{N}(\mathbf{x}_t; \sqrt{\bar{\alpha}_t} \mathbf{x}_0, (1 - \bar{\alpha}_t) \mathbf{I}),
-\end{equation}
-where the cumulative coefficient $\bar{\alpha}_t$ is defined as:
-\begin{equation}
-    \bar{\alpha}_t = \prod_{s=1}^t \alpha_s, \quad \alpha_t = 1 - \beta_t
-\end{equation}
-This closed-form solution allows us to directly sample $\mathbf{x}_t$ from $\mathbf{x}_0$, greatly simplifying the derivation process during training.
+Diffusion models are a class of probabilistic generative models proposed by \textit{Sohl-Dickstein et al.}\cite{pmlr-v37-sohl-dickstein15}, and later widely applied in image generation tasks by \textit{Ho et al.}\cite{ho2020denoisingdiffusionprobabilisticmodels} and also medical images. Their framework can be understood through two main processes:
 
-\subsubsection{Reverse Process}
-The reverse process aims to rebuild data starting from pure Gaussian noise through gradual denoising. Assuming the Markovian property of the forward process holds, the reverse process can also be represented by a Markov chain:
+% \subsubsection{Forward Process}
+The forward process gradually adds noise to the data $\mathbf{x}_0 \in \mathbb{R}^d$ through a Markov chain. At each step, Gaussian noise is added according to a predefined schedule:
 \begin{equation}
-    p_\theta(\mathbf{x}_{0:T}) = p(\mathbf{x}_T) \prod_{t=1}^T p_\theta(\mathbf{x}_{t-1} \mid \mathbf{x}_t),
+    q(\mathbf{x}_t \mid \mathbf{x}_{t-1}) = \mathcal{N}(\mathbf{x}_t; \sqrt{1 - \beta_t} \mathbf{x}_{t-1}, \beta_t \mathbf{I})
 \end{equation}
-where $p(\mathbf{x}_T)$ is a standard Gaussian distribution, and $p_\theta(\mathbf{x}_{t-1} \mid \mathbf{x}_t)$ represents the reverse conditional distribution. We typically assume it takes the form of a Gaussian distribution:
-\begin{equation}
-    p_\theta(\mathbf{x}_{t-1} \mid \mathbf{x}_t) = \mathcal{N}(\mathbf{x}_{t-1}; \boldsymbol{\mu}_\theta(\mathbf{x}_t, t), \sigma_t^2 \mathbf{I}).
-\end{equation}
-Here, the mean $\boldsymbol{\mu}_\theta$ and variance $\sigma_t^2$ are modeled by neural networks. To simplify implementation, $\sigma_t^2$ is often fixed as a constant.
+where $\beta_t \in (0, 1)$ represents the noise intensity at step $t$. The process eventually transforms the data distribution into an isotropic Gaussian distribution.
 
-\subsubsection{Model Training}
+% \subsubsection{Reverse Process}
+The reverse process is the core of generation, where a neural network is trained to denoise gradually, starting from Gaussian noise:
+\begin{equation}
+    p_\theta(\mathbf{x}_{t-1} \mid \mathbf{x}_t) = \mathcal{N}(\mathbf{x}_{t-1}; \boldsymbol{\mu}_\theta(\mathbf{x}_t, t), \sigma_t^2 \mathbf{I})
+\end{equation}
+The model learns to predict the noise component added during the forward process, allowing for step-by-step recovery of the clean signal.
 
-In practice, directly predicting $\mathbf{x}_{t-1}$ can be overly complex. We can simplify this problem by predicting the noise $\boldsymbol{\epsilon}$ in the forward process. According to the closed-form solution of the forward process:
+% \subsubsection{Training and Sampling}
+The training objective is typically simplified to predicting the noise added during the forward process:
 \begin{equation}
-    \mathbf{x}_t = \sqrt{\bar{\alpha}_t} \mathbf{x}_0 + \sqrt{1 - \bar{\alpha}_t} \boldsymbol{\epsilon}, \quad \boldsymbol{\epsilon} \sim \mathcal{N}(\mathbf{0}, \mathbf{I}),
+    L(\theta) = \mathbb{E}_{\mathbf{x}_0, \boldsymbol{\epsilon}, t}\bigl[\|\boldsymbol{\epsilon} - \boldsymbol{\epsilon}_\theta(\mathbf{x}_t, t)\|^2\bigr]
 \end{equation}
-the model's task can be transformed into learning to predict the noise $\boldsymbol{\epsilon}$, i.e., approximating the true noise through a neural network $\boldsymbol{\epsilon}_\theta(\mathbf{x}_t, t)$.
-For this purpose, the training objective is defined as minimizing the following mean squared error (MSE) loss:
-\begin{equation}
-    L_{\text{simple}}(\theta) = \mathbb{E}_{\mathbf{x}_0, \boldsymbol{\epsilon}, t}\bigl[\|\boldsymbol{\epsilon} - \boldsymbol{\epsilon}_\theta(\mathbf{x}_t, t)\|^2\bigr]
-\end{equation}
-This approach is not only simple but has also shown good performance in generation tasks.
+
+During sampling, starting from Gaussian noise $\mathbf{x}_T \sim \mathcal{N}(\mathbf{0}, \mathbf{I})$, the model iteratively refines the sample through multiple denoising steps. While this produces high-quality results, the iterative nature makes inference computationally expensive compared to single-pass methods like CNNs or GANs.
+
+Diffusion models provide several advantages for PET reconstruction under incomplete ring conditions \cite{webber2024}. They effectively avoid the mode collapse problem common in GANs, ensuring robust coverage of possible solutions \cite{singh2024}. They can also integrate learned priors for PET images, which is crucial when large segments of sinogram data are missing \cite{gong2024}. Their iterative refinement approach aligns well with traditional iterative reconstruction methods in PET imaging, such as MLEM.
+
+However, directly applying DPMs for reconstruction introduces challenges related to computation speed and partial data handling \cite{liu2019}. To address these limitations, we propose a coarse-to-fine method that introduces a deterministic, high-capacity coarse prediction module combined with a smaller diffusion model focused specifically on residual reconstruction \cite{han2023}.
 
 
-The model's training objective is based on the variational lower bound (VLB), optimizing the generation process by maximizing the data likelihood $\log p_\theta(\mathbf{x}_0)$. Its bound form is:
-\begin{equation}
-    -\log p_\theta(\mathbf{x}_0) \leq \text{KL}\bigl(q(\mathbf{x}_T \mid \mathbf{x}_0) \| p(\mathbf{x}_T)\bigr) + \sum_{t=2}^T \text{KL}\bigl(q(\mathbf{x}_{t-1} \mid \mathbf{x}_t, \mathbf{x}_0) \| p_\theta(\mathbf{x}_{t-1} \mid \mathbf{x}_t)\bigr) - \log p_\theta(\mathbf{x}_0 \mid \mathbf{x}_1)
-\end{equation}
-In practice, directly optimizing this objective is relatively complex, and the simplified noise prediction loss $L_{\text{simple}}(\theta)$ is typically used for optimization, with the core being to learn the denoising process.
 
-\subsubsection{Sampling}
-In the generation stage, starting from Gaussian noise $\mathbf{x}_T \sim \mathcal{N}(\mathbf{0}, \mathbf{I})$, samples are gradually generated through the following formula:
-\begin{equation}
-    \mathbf{x}_{t-1} = \frac{1}{\sqrt{\alpha_t}} \bigl(\mathbf{x}_t - \frac{1 - \alpha_t}{\sqrt{1 - \bar{\alpha}_t}} \boldsymbol{\epsilon}_\theta(\mathbf{x}_t, t)\bigr) + \sigma_t \mathbf{z}, \quad \mathbf{z} \sim \mathcal{N}(\mathbf{0}, \mathbf{I})
-\end{equation}
-Here, $\sigma_t$ represents the noise intensity at each step.
-Through multiple iterations, the finally generated $\mathbf{x}_0$ should approach the target data distribution.
 
-% \subsection{Summary}
-Diffusion models, as a generative modeling method combining the advantages of probabilistic graphical models and deep learning, achieve efficient generation through forward noise addition and reverse denoising processes, showing broad application prospects in fields such as image generation, speech synthesis, and text generation. In the inverse problem of PET reconstruction under incomplete ring conditions, the advantages of diffusion models are particularly prominent: they not only effectively avoid the mode collapse problem common in GANs, ensuring robust coverage of possible solutions, but can also effectively integrate learned priors for PET images, which is extremely important when large segments of sinogram data are missing; meanwhile, their iterative refinement characteristic highly aligns with the iterative image reconstruction methods (such as MLEM) widely used in the PET field. However, direct application of DPMs for reconstruction has issues of slow computation speed and insufficient consideration of partial data scale. To address these limitations, we propose an innovative coarse-to-fine method, effectively overcoming these challenges by introducing a deterministic, high-capacity coarse prediction module combined with a small-scale iterative diffusion model focused on residual reconstruction.
+
+
+
+
 
 
 
 \subsection{Coarse-to-Fine Reconstruction Framework}
 
-In this section, we outline the main workflow of the coarse-to-fine approach for reconstructing PET data from incomplete ring scanners. First, we introduce the system modeling description (i.e., how to simulate or process incomplete rings). Then, we detail the data generation steps for complete and incomplete rings, ultimately building our \emph{CPM + IRM} reconstruction architecture. Finally, we discuss the \emph{auxiliary guidance} and \emph{contrastive diffusion} strategies.
-
-
-
-
-
-\subsubsection{Overall Coarse-to-Fine Framework}
-\label{sec:overall_coarse_fine}
-Applying diffusion probabilistic models directly to incomplete ring reconstruction typically faces the problem of high computational cost, as each inference requires multiple iterative steps. Additionally, for large 3D volumes (128\(^3\) or higher), pure diffusion methods may be challenging in terms of memory. Therefore, we adopt a \emph{coarse-to-fine} approach, where the \textbf{Coarse Prediction Module (CPM)} outputs an initial deterministic reconstruction from partial or degraded input, as shown in Figure~\ref{fig:coarse_to_fine_framework}. The
-\textbf{Iterative Refinement Module (IRM)} implements a conditional diffusion process to estimate the residual \(\mathbf{r}_0\) between the coarse prediction and the ground truth.
-
-\begin{figure*}[ht]
+To effectively address reconstruction challenges in incomplete ring PET imaging, we propose a two-stage approach that balances reconstruction quality with computational efficiency.
+\begin{figure}[ht]
     \centering
-    \includegraphics[width=0.8\textwidth]{Images/C2F.png}
+    \includegraphics[width=0.49\textwidth]{Images/C2F.png}
     \caption{Overview of the coarse-to-fine incomplete ring PET reconstruction framework. The method contains two key modules: the Coarse Prediction Module (CPM) and the Iterative Refinement Module (IRM). The system first receives low-quality PET images (LPET) and auxiliary guidance information as input. The CPM generates preliminary reconstruction results (coarse prediction) through a single forward pass. Subsequently, the IRM, based on diffusion probabilistic models, reconstructs the residual signal through T iterative steps. Finally, the system combines the coarse prediction with the reconstructed residual to generate a high-quality refined PET image (RPET). This dual-stage design effectively balances computational efficiency with reconstruction quality, overcoming the limitations of traditional diffusion models in terms of computational cost.}
     \label{fig:coarse_to_fine_framework}
-\end{figure*}
-
+\end{figure}
 
 \subsubsection{Coarse Prediction Module (CPM)}
-Let \(\mathbf{c}\) be our condition, including \(\mathbf{Y}_B\), the reconstructed PET image from incomplete data; \(\mathbf{X}_{\text{aux}}\), additional auxiliary guidance, such as adjacent slices or spectral transforms.
-
-
-
-The CPM, denoted as \(P_\theta(\mathbf{c})\), is a deterministic deep network designed to generate a coarse reconstruction \(\mathbf{x}_\text{cp}\). This step effectively transfers most of the parametric complexity into a single forward pass. In practice, the CPM can be a relatively large U-net or other suitable backbone network, trained as follows:
+The first stage employs a Coarse Prediction Module that generates an initial reconstruction estimate. Let \(\mathbf{c}\) represent our conditional inputs, comprising the low-quality PET image \(\mathbf{Y}_B\) from incomplete data and auxiliary guidance information \(\mathbf{X}_{\text{aux}}\). The CPM, implemented as a deterministic U-net, produces a coarse reconstruction \(\mathbf{x}_\text{cp}\) through a single forward pass:
 \begin{equation}
-\mathcal{L}_{\text{CPM}} = \|\mathbf{x}_\text{cp} - \mathbf{Y}_A\|_1,
+\mathbf{x}_\text{cp} = P_\theta(\mathbf{c})
 \end{equation}
-or using a mean squared error (MSE) loss. In our final method, we integrate the training of the CPM with the IRM into a single framework.
+This module effectively captures global image structures while maintaining computational efficiency \cite{saharia2023}. The CPM is optimized using an L1 loss:
+\begin{equation}
+\mathcal{L}_{\text{CPM}} = \|\mathbf{x}_\text{cp} - \mathbf{Y}_A\|_1
+\end{equation}
+where \(\mathbf{Y}_A\) represents the target high-quality reconstruction.
 
 \subsubsection{Iterative Refinement Module (IRM)}
-Once we have \(\mathbf{x}_\text{cp}\), we define \(\mathbf{r}_0 = \mathbf{Y}_A - \mathbf{x}_\text{cp}\) as the residual. Our goal is to learn a diffusion process to model:
+The second stage employs an Iterative Refinement Module that focuses specifically on recovering residual details. Rather than modeling the entire image, the IRM models only the residual \(\mathbf{r}_0 = \mathbf{Y}_A - \mathbf{x}_\text{cp}\). This residual-focused approach offers significant advantages:
+
+1. The IRM can utilize a smaller network capacity as it only needs to capture fine details
+2. The distribution gap between coarse prediction and ground truth is substantially smaller than between random noise and ground truth
+3. This narrower gap enables faster convergence and fewer diffusion steps during inference
+
+The final reconstruction is obtained by combining the coarse prediction with the estimated residual:
 \begin{equation}
-p_\theta(\mathbf{r}_{t-1} \mid \mathbf{r}_t, \mathbf{c}) \approx q(\mathbf{r}_{t-1} \mid \mathbf{r}_t, \mathbf{r}_0),
+\widehat{\mathbf{Y}_A} = \mathbf{x}_\text{cp} + \widehat{\mathbf{r}_0}
 \end{equation}
-such that sampling from the IRM can yield a residual estimate \(\widehat{\mathbf{r}_0}\) from a random noise initialization. We can then reconstruct:
+% \subsection{Implementation Details}
+\subsubsection{Auxiliary Guidance Strategies}
+To further improve reconstruction quality, particularly in regions with severe data loss, we incorporate two complementary guidance signals:
+
+\textbf{Neighboring Axial Slices (NAS).} Since PET volumes are inherently three-dimensional, we leverage adjacent slices to provide spatial context \cite{xie2024}:
 \begin{equation}
-\widehat{\mathbf{Y}_A} = \mathbf{x}_\text{cp} + \widehat{\mathbf{r}_0}.
+\mathbf{X}_{\text{NAS}} = \{\mathbf{Y}_B^{(z-2)}, \mathbf{Y}_B^{(z-1)}, \mathbf{Y}_B^{(z+1)}, \mathbf{Y}_B^{(z+2)}\}
 \end{equation}
-Since the IRM focuses only on the residual, its capacity can be smaller. Moreover, the gap between \(\mathbf{x}_\text{cp}\) and \(\mathbf{Y}_A\) is typically significantly smaller than the gap between a random noise distribution and \(\mathbf{Y}_A\). This achieves faster convergence and fewer sampling time steps in practice.
+This multi-slice approach enables the model to maintain structural consistency across the axial dimension, reducing isolated artifacts that might appear in single-slice approaches.
 
-\subsubsection{Training Objectives}
-We follow the typical DPM training approach but treat \(\mathbf{y}_0=\mathbf{r}_0\) as the \emph{target data} in the diffusion sense. We combine the losses for CPM and IRM:
+\textbf{Spectral Guidance.} We also incorporate frequency domain information by applying the discrete Fourier transform to input slices:
 \begin{equation}
-\mathcal{L}_{\text{main}} = \mathbb{E}_{(\mathbf{c},\mathbf{Y}_A)}\Big[
-\underbrace{\|\mathbf{r}_0 - D_\theta(\mathbf{c},\mathbf{r}_t,t)\|_1}_{\text{IRM-latent}}\Big] 
-\quad \text{where} \quad \mathbf{r}_t=\sqrt{\gamma_t}\,\mathbf{r}_0 + \sqrt{1-\gamma_t}\,\boldsymbol{\epsilon}.
+\mathbf{X}_{\text{spec}} = \mathcal{F}(\mathbf{Y}_B)
 \end{equation}
-The CPM is integrated in joint training so that the initial guess \(\mathbf{x}_\text{cp}=P_\theta(\mathbf{c})\) is also refined. In the final method, we use a single model with two subnetworks that have shared or partially shared parameters. The overall training thus \emph{learns how} to effectively separate the reconstruction into coarse and residual parts.
+Spectral guidance provides global frequency priors that help suppress the high-frequency streak artifacts commonly associated with incomplete angular coverage in PET reconstruction \cite{luo2022}.
 
-\subsection{Auxiliary Guidance Strategies}
-\label{sec:aux_guidance}
-We leverage neighboring axial slices (NAS) and spectral guidance as additional inputs to reduce ambiguity in incomplete PET data, especially for slices or regions with severely missing LOR coverage.
+% \subsubsection{Contrastive Learning Strategy}
+% To ensure the model produces anatomically plausible reconstructions specific to each individual scan, we incorporate a contrastive learning objective. This approach distinguishes between:
 
-Since PET volumes are inherently 3D, each slice in the axial dimension is related to its neighboring slices. For 2D slice-based approaches, we can provide adjacent axial slices to the CPM/IRM for stronger local context. Specifically:
-\begin{equation}
-\mathbf{X}_{\text{NAS}} = \{\mathbf{Y}_B^{(z-2)}, \mathbf{Y}_B^{(z-1)}, \mathbf{Y}_B^{(z+1)}, \mathbf{Y}_B^{(z+2)}\},
-\end{equation}
-where \(\mathbf{Y}_B^{(z)}\) is the \(z^\text{th}\) axial slice. During inference, these additional slices provide continuity constraints, helping the model detect partial ring artifacts that would degrade single-slice approaches.
+% \textbf{Positive samples:} Correct reconstructions from the same subject  
+% \textbf{Negative samples:} Reconstructions from different subjects
 
-We also incorporate a frequency domain perspective by applying a two-dimensional discrete Fourier transform (DFT) to each slice. Let \(\mathcal{F}\) be the DFT operator. We define:
-\begin{equation}
-\mathbf{X}_{\text{spec}} = \mathcal{F}(\mathbf{Y}_B),
-\end{equation}
-and include both magnitude and phase components as auxiliary channels. This imposes global frequency priors, helping to correct high-frequency streak artifacts that often arise due to incomplete angular coverage.
+% This contrastive mechanism explicitly pushes the model's output distribution toward the correct anatomical structure while avoiding convergence to an average or generic solution that might occur when training on diverse datasets.
 
-In practice, we implement these auxiliary signals through a \emph{guided ResBlock} architecture\cite{Ren2022} in the U-net encoders of the CPM and IRM. At each resolution level \(k\in\{1,\dots,M\}\), the auxiliary features are appropriately downsampled and injected through small convolutions into the main branch, incorporating them into existing feature maps. Additionally, we introduce extra \(\ell_1\) penalties to ensure that auxiliary features extracted from \(\mathbf{X}_{\text{NAS}}\) and \(\mathbf{X}_{\text{spec}}\) align with corresponding high-quality features. The mathematical expressions are:
-\begin{align}
-\mathcal{L}^\text{NAS}_{\text{G}} &= \sum_{k=1}^M \Big\|\mathbf{Y}_{\text{NAS},k} - C_\theta\big(F_\theta(\mathbf{X}_{\text{NAS},k})\big)\Big\|_1,\\
-\mathcal{L}^\text{spec}_{\text{G}} &= \sum_{k=1}^M \Big\|\mathbf{Y}_{\text{spec},k} - C_\theta\big(F_\theta(\mathbf{X}_{\text{spec},k})\big)\Big\|_1,
-\end{align}
-where \(F_\theta\) is a feature extractor, \(C_\theta\) is a mapper back to the original domain, and \(\mathbf{Y}_{\text{NAS},k},\mathbf{Y}_{\text{spec},k}\) are the ground truth features corresponding to high-quality data slices. These constraints encourage more accurate guidance signals.
+% % \subsection{Implementation Details}
+% Our implementation builds upon the conditional U-net architecture with several modifications:
+% \textbf{Network capacity:} The CPM employs larger channel dimensions (128--512 channels) for a single comprehensive forward pass, while the IRM uses reduced dimensions (64--256 channels) to maintain efficiency during its iterative process.
+% \textbf{Training protocol:} We utilize the Adam optimizer with a learning rate of \(10^{-4}\). For the diffusion component, we employ 2000 noise steps during training but reduce this to only 10--50 steps during inference using accelerated sampling techniques.
+% \textbf{Loss formulation:} The complete training objective integrates all components:
+% \begin{equation}
+% \mathcal{L}_{\text{total}} = 
+% \mathcal{L}_{\text{main}} + \lambda_{\text{NAS}}\mathcal{L}_{\text{G}}^{\text{NAS}} + \lambda_{\text{spec}}\mathcal{L}_{\text{G}}^{\text{spec}} + \lambda_{\text{CL}}\mathcal{L}_{\text{CL}}
+% \end{equation}
+% The hyperparameters \(\lambda_{\text{NAS}}=\lambda_{\text{spec}}=1\) and \(\lambda_{\text{CL}}=5\times10^{-5}\) were determined through empirical testing and align with values from related literature\cite{Zhu2022, Saharia2022}.
 
-\subsection{Contrastive Diffusion Strategy}
-\label{sec:contrastive_diff}
-DPMs typically rely on an implicit correspondence between the low-quality input \(\mathbf{Y}_B\) and the reconstructed output \(\mathbf{Y}_A\). To strengthen this correspondence, we integrate a \emph{contrastive learning} objective:
-\textbf{Positive samples:} Correct ground truth or intermediate reconstructions from the same subject.
-\textbf{Negative samples:} A randomly selected set of ground truth PET slices from other subjects, ensuring the network doesn't converge to an average or degraded solution.
-At each diffusion step \(t\), the model generates an intermediate reconstruction \(\widetilde{\mathbf{Y}}_A\). We enforce:
-\begin{equation}
-\mathcal{L}_{\text{CL}} = \mathbb{E}_{q(\mathbf{Y}_A)}\big[-\log p_\theta(\mathbf{Y}_A\mid \mathbf{r}_t,\mathbf{c})\big] 
-- \sum_{\mathbf{Y}^- \in \text{Neg}}\mathbb{E}_{q(\mathbf{Y}^-)}\big[-\log p_\theta(\mathbf{Y}^-\mid \mathbf{r}_t,\mathbf{c})\big].
-\end{equation}
-Here, we want the model to generate a reconstruction that is more likely to match the correct ground truth rather than any random negative sample. This effectively \emph{pushes} the distribution of \(\widetilde{\mathbf{Y}}_A\) towards \(\mathbf{Y}_A\) and away from other plausible but incorrect solutions.
+This coarse-to-fine framework effectively balances reconstruction quality with computational efficiency, providing a practical solution for incomplete ring PET imaging in clinical settings.
 
-\subsection{Complete Training Objective}
-Combining all the discussed items:
-\begin{equation}
-\label{eq:total_loss}
-\mathcal{L}_{\text{total}} = 
-\mathcal{L}_{\text{main}} + \lambda_{\text{NAS}}\mathcal{L}_{\text{G}}^{\text{NAS}} + \lambda_{\text{spec}}\mathcal{L}_{\text{G}}^{\text{spec}} + \lambda_{\text{CL}}\mathcal{L}_{\text{CL}},
-\end{equation}
-where \(\lambda_{\text{NAS}}, \lambda_{\text{spec}}, \lambda_{\text{CL}}\) balance these auxiliary terms. The final training is end-to-end, allowing the network to learn how to best leverage the coarse-to-fine structure, auxiliary guidance, and contrastive output-level supervision.
 
-In practice, we base our implementation on the standard conditional U-net architecture\cite{Saharia2022}, with the following minor modifications:
-\textbf{U-net depth and channel count:} For the CPM, we allocate more channels per layer (e.g., 128--512) since it runs only once per volume. For the IRM, we use fewer channels (e.g., 64--256) to maintain speed for iterative inference.
-\textbf{Number of diffusion steps:} We use \(T=2000\) time steps in training, typically reducing this to 10--50 during inference through accelerated samplers.
-\textbf{Optimization:} We use the Adam optimizer with a learning rate of \(10^{-4}\). The total training epochs or iterations depend on the dataset size, but for large-scale 2D slices, it may exceed 500,000 iterations.
-\textbf{Negative sample pool:} We maintain a pool of negative samples of random subject slices (\(N\approx10\) per batch).
-\textbf{Loss weights:} By default, \(\lambda_{\text{NAS}}=\lambda_{\text{spec}}=1\), \(\lambda_{\text{CL}}=5\times10^{-5}\), values empirically tested and based on existing literature\cite{Zhu2022}.
-
-Overall, the framework aims to robustly reconstruct missing ring data in a computationally efficient manner, combining the reliability and flexibility of diffusion models with the speed of a single forward coarse predictor.
 
 
 \subsection{Evaluation Metrics}
 
 To comprehensively evaluate the performance of incomplete ring PET reconstruction methods, this study employs multiple quantitative and qualitative metrics. These metrics measure the similarity between reconstructed images and ground truth images from different perspectives, including pixel-level accuracy, structural fidelity, and preservation of clinically relevant features.
 
-\subsubsection{Peak Signal-to-Noise Ratio (PSNR)}
+% \subsubsection{Peak Signal-to-Noise Ratio (PSNR)}
 
-Peak Signal-to-Noise Ratio (PSNR) is a fundamental metric for evaluating reconstructed image quality, calculated based on Mean Squared Error (MSE) and expressed on a logarithmic scale. The definition of PSNR is as follows:
-
+\textbf{Peak Signal-to-Noise Ratio (PSNR)} \cite{Hore2010PSNRvsSSIM} is a fundamental metric for evaluating reconstructed image quality, calculated based on Mean Squared Error (MSE) and expressed on a logarithmic scale. The definition of PSNR is as follows:
 \begin{equation}
 \text{PSNR} = 10 \cdot \log_{10}\left(\frac{\text{MAX}_I^2}{\text{MSE}}\right)
 \end{equation}
-
 where $\text{MAX}_I$ represents the maximum possible pixel value of the image; for images normalized to the [0,1] range, $\text{MAX}_I = 1$. MSE is calculated as follows:
-
 \begin{equation}
 \text{MSE} = \frac{1}{mn}\sum_{i=0}^{m-1}\sum_{j=0}^{n-1}[I(i,j) - K(i,j)]^2
 \end{equation}
-
 where $I$ and $K$ are the original and reconstructed images respectively, and $m$ and $n$ are the image dimensions. For three-dimensional PET image voxels, the MSE calculation extends to three dimensions.
 
 PSNR values are typically expressed in decibels (dB), with higher values indicating better reconstruction quality. In this study, PSNR values above 30dB typically indicate high-quality reconstruction, and our method achieved an average PSNR of 35.6421dB in high angular loss regions (30°-60°), significantly outperforming traditional methods.
 
-\subsubsection{Structural Similarity Index (SSIM)}
-
-Although PSNR is intuitive, it cannot adequately reflect the human visual system's perception of structural information. The Structural Similarity Index Measure (SSIM) addresses this deficiency by evaluating similarity in terms of brightness, contrast, and structure to more comprehensively assess image quality:
-
+\textbf{Structural Similarity Index (SSIM)}: Although PSNR is intuitive, it cannot adequately reflect the human visual system's perception of structural information. SSIM addresses this deficiency by evaluating similarity in terms of brightness, contrast, and structure to more comprehensively assess image quality \cite{Wang2004SSIM}:
 \begin{equation}
 \text{SSIM}(x, y) = \frac{(2\mu_x\mu_y + c_1)(2\sigma_{xy} + c_2)}{(\mu_x^2 + \mu_y^2 + c_1)(\sigma_x^2 + \sigma_y^2 + c_2)}
 \end{equation}
-
 where $\mu_x$ and $\mu_y$ are the averages of images $x$ and $y$ respectively; $\sigma_x^2$ and $\sigma_y^2$ are their variances; $\sigma_{xy}$ is their covariance; and $c_1$ and $c_2$ are small constants set to avoid division by zero.
 
 SSIM values range between [-1,1], with 1 indicating that two images are identical. In medical image reconstruction, SSIM is particularly important because it better reflects the preservation of diagnostically relevant structures. Our method achieved an average SSIM of 0.9588 on the validation set, indicating that the reconstructed images successfully preserved key structural features of the original PET images.
 
-\subsubsection{Normalized Mean Square Error (NMSE)}
-
-Normalized Mean Square Error (NMSE) provides a normalized measure of image error relative to the energy of the original image:
-
+\textbf{Normalized Mean Square Error (NMSE)} provides a normalized measure of image error relative to the energy of the original image \cite{Higashiyama2024NMSE}:
 \begin{equation}
 \text{NMSE} = \frac{\sum_{i,j,k}(X_{i,j,k} - \hat{X}_{i,j,k})^2}{\sum_{i,j,k}X_{i,j,k}^2}
 \end{equation}
-
 where $X$ and $\hat{X}$ are the original and reconstructed images respectively. A smaller NMSE indicates better reconstruction quality, and it is particularly useful for comparisons between different image sets and experimental setups as it eliminates the impact of image scale.
 
 
@@ -630,7 +539,7 @@ where $X$ and $\hat{X}$ are the original and reconstructed images respectively. 
 \begin{figure*}[htbp]
     \centering
     \vspace{-0.2cm}
-    \includegraphics[width=0.98\textwidth]{Images/output2}
+    \includegraphics[width=0.9\textwidth]{Images/output2}
     \vspace{-0.2cm}
     \caption{Comparison of reconstruction results from incomplete rings with the original image, showing that the two are vastly different, demonstrating that direct reconstruction from incomplete rings is not feasible.}
     \vspace{-0.2cm}
@@ -670,7 +579,7 @@ Combining the above results, our experiments prove the effectiveness of the prop
 
 
 %!TEX root = ../Manual.tex
-\section{Conclusion and Outlook}
+\section{Conclusion and Discussion}
 \label{chap:conclusion}
 
 This thesis proposes an innovative coarse-to-fine diffusion-based reconstruction framework specifically for incomplete ring PET imaging. In terms of technical innovation, we designed a two-stage architecture consisting of a Coarse Prediction Module (CPM) and an Iterative Refinement Module (IRM), effectively solving the reconstruction problem by separating initial estimation and residual correction; we introduced an auxiliary guidance strategy incorporating adjacent axial slices and frequency domain features in the input space, injecting valuable spatial and frequency priors; we innovatively integrated contrastive learning objectives into the diffusion process in the output space, enhancing the correspondence between input and ground truth output. Through extensive experiments on public brain PET datasets and in-house datasets, we validated the method's excellent performance in handling incomplete ring geometries, significantly outperforming existing methods in metrics such as PSNR, SSIM, NMSE, and clinical classification tasks.
