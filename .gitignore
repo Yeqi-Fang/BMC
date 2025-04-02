@@ -1,0 +1,10 @@
+*.bbl
+*.synctex*
+*.log
+*.blg
+*.out
+*.aux
+*.zip
+shadow*otes.bib\
+shadow.f*
+shadowNotes.bib
