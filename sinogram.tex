@@ -101,18 +101,28 @@ prd,
 
 \subsection{Background and Motivation}
 
-Positron emission tomography (PET) stands as a powerful molecular imaging technique, offering quantitative visualization of metabolic processes within living tissue \cite{townsend2004}. The fundamental principle is elegant yet complex: a radiotracer introduces positrons that, upon encountering electrons, annihilate and produce pairs of $511$keV photons traveling in opposing directions. These photon pairs are captured by scintillation detectors arranged in a ring, with each coincident detection marking a line-of-response (LOR). Traditional PET systems rely on complete 360$^\circ$ detector rings to maximize sensitivity and provide uniform angular coverage \cite{townsend2004}.
+Positron emission tomography (PET) is a powerful molecular imaging technique that provides quantitative visualization of metabolic processes within living tissue \cite{townsend2004}. The fundamental principle is elegant but complex: a radiotracer introduces positrons that annihilate upon encountering electrons, and then produce pairs of $511$keV photons traveling in opposing directions. 
+The photon pairs are then detected by a pair of scintillation sensors, and each coincidence event will define a line-of-response (LOR).
+Traditional PET systems usually use complete 360$^\circ$ detector rings to maximize their sensitivity and angular coverage \cite{townsend2004}.
 
-But what happens when a complete ring isn't feasible? This question has driven the development of incomplete-ring PET systems. Such systems have emerged from practical necessity rather than theoretical preference: they reduce costs and complexity, allow closer access to patients in specialized applications like breast scanning \cite{surti2008}, create "open" configurations that alleviate claustrophobia \cite{tashima2012, krishnamoorthy2021}, and enable novel applications such as dual-panel brain imaging systems \cite{zhang2020}. The trade-off is severe—incomplete angular coverage creates gaps in projection data, turning reconstruction into an underdetermined problem. Missing angular views inevitably introduce artifacts and resolution non-uniformity \cite{kak1988, surti2008}. Even time-of-flight capabilities, which partially mitigate these issues, can't fully compensate for limited view angles \cite{surti2008, krishnamoorthy2021}.
+But what happens when a complete ring isn't feasible? This question has driven the development of incomplete-ring PET systems. Such systems have emerged from practical necessity rather than theoretical preference: they reduce costs and complexity, allow closer access to patients in specialized applications like breast scanning \cite{surti2008}, create "open" configurations that alleviate claustrophobia \cite{tashima2012, krishnamoorthy2021}, and enable novel applications such as dual-panel brain imaging systems \cite{zhang2020}. The trade-off is severe—incomplete angular coverage creates gaps in projection data, turning reconstruction into an underdetermined problem. Missing angular views inevitably introduce artifacts and resolution non-uniformity \cite{kak1988, surti2008}. Even time-of-flight capabilities, which partially fix these problems, can't fully compensate for limited view angles \cite{surti2008, krishnamoorthy2021}.
 
-Researchers have pursued various paths to address incomplete-ring PET reconstruction. Analytical methods like filtered back-projection falter immediately—their assumption of complete data leads to pronounced streak artifacts \cite{kak1988}. Iterative approaches such as maximum-likelihood expectation-maximization (MLEM) fare somewhat better by modeling the acquisition process \cite{qi2006}, yet they still struggle with artifacts along missing view directions \cite{zhang2020}. Penalized likelihood methods incorporating prior constraints show promise, as Zhang \textit{et al.} demonstrated by using high-quality prior images to enhance contrast recovery in a dual-panel head-and-neck PET system \cite{zhang2020}. But these methods still fall short of solving the fundamental problem.
+Researchers have investigated a lot of ways to achieve better and better incomplete-ring PET reconstruction. Analytical ways like filtered back-projection falter immediately—their assumption of complete data leads to pronounced streak artifacts \cite{kak1988}. Iterative approaches like maximum-likelihood expectation-maximization (MLEM) are better by modeling the acquisition process \cite{qi2006}, but they still have artifacts along missing view directions \cite{zhang2020}.
+Penalized likelihood methods incorporating prior constraints show promise, as Zhang \textit{et al.} demonstrated by using high-quality prior images to enhance contrast recovery in a dual-panel head-and-neck PET system \cite{zhang2020}. But these methods are still not enough to solve the fundamental problem.
 
-Deep learning has brought fresh perspectives to this challenge, though with mixed results. Regression-based networks have shown potential in low-dose PET denoising and partial data reconstruction \cite{Kandarpa_2021} by learning direct mappings between degraded and high-quality images. Liu \textit{et al.}'s U-Net approach to transform artifact-degraded partial-ring PET images \cite{liu2019} demonstrated initial success, but conventional CNNs struggle with the global features needed to address large-scale angular losses. 
+Deep learning has brought new ideas to this challenge, though with mixed results. Regression-based networks have shown promise in low-dose PET denoising and partial data reconstruction \cite{Kandarpa_2021} by learning direct mappings between degraded and high-quality images. Liu \textit{et al.}'s U-Net approach to transform artifact-degraded partial-ring PET images \cite{liu2019} demonstrated initial success, but conventional CNNs struggle with the global features needed to address large-scale angular losses. 
 
-Current solutions present a troubling set of compromises. Unsupervised and physics-guided methods like Shan \textit{et al.}'s deep image prior approach \cite{shan2024} can match measured projections without external training pairs, but often at the cost of generalizability. GAN-based methods can produce visually plausible images \cite{xue2023cg3dsrganclassificationguided3d}, but their training instability and questionable quantitative accuracy limit clinical application. Likelihood-based generative models like VAEs and normalizing flows offer theoretical rigor but typically produce blurry results while demanding excessive computation. Model-based deep learning frameworks and generative models \cite{reader2023, vashistha2024} show promise but risk introducing hallucinated features—a dangerous proposition in medical imaging.
+Current available techniques have some drawbacks.
+% Unsupervised and physics-guided ways like Shan \textit{et al.}'s deep image prior approach \cite{shan2024} can match measured projections without external training pairs, but often at the cost of generalizability. 
+For examples, while GAN approaches are good at generating visually compelling reconstructions, \cite{xue2023cg3dsrganclassificationguided3d} they are instable when training and often highly sensitive to hyperparameters, which limit their clinical use.
+% GAN-based methods can produce visually plausible images , but their training instability and questionable quantitative accuracy limit clinical application. 
+% Approaches rooted in explicit likelihood modeling (VAEs, flow-based methods) provide stronger theoretical guarantees but face persistent challenges in preserving high-frequency details in reconstructed images, alongside prohibitive inference times that complicate their integration into clinical workflows.
+Methods based on explicit likelihood modeling—like VAEs and flow-based approaches—offer solid theoretical foundations. But they usually lose details in reconstructed images and their low speeds also make them not suitable for clinical use.
+Model-based deep learning frameworks and generative models \cite{reader2023, vashistha2024} show promise but risk introducing hallucinated features—a dangerous proposition in medical imaging.
 
-The core challenge remains unsolved: fundamental \textbf{information loss}. Analytical methods collapse under data deficiency, over-regularized iterative methods blur subtle features, and deep learning models risk introducing misleading artifacts. Current approaches fail in at least one critical dimension—they can't handle severe data loss, require unrealistic computational resources, or compromise the detailed features that clinicians depend on for diagnosis. This thesis tackles these limitations head-on with a coarse-to-fine diffusion model framework designed specifically for incomplete ring PET scanners. Our approach aims to recover missing angular information while suppressing reconstruction artifacts, preserving the true image details that matter most in clinical practice.
-
+The core challenge is the fundamental \textbf{information loss}, which can not be solved, only mitigation. Analytical methods collapse under data deficiency, over-regularized iterative methods blur subtle features, and deep learning models risk introducing misleading artifacts. Current approaches fail in at least one critical dimension—they can't handle severe data loss, require unrealistic computational resources, or compromise the detailed features that clinicians depend on for diagnosis. 
+This study solves these problems by introducing a new coarse-to-fine model for both sinogram and its reconstruction which can preserve details useful for accurate clinical diagnosis.
+% Our method emphasizes restoring the missing angular information in the sinogram, effectively suppressing streak artifacts, and preserving the fine structural details critical for accurate clinical diagnosis.
 \begin{figure}[htbp]
 	\centering
 	\includegraphics[scale=0.47]{./Images/graph.jpg}
@@ -122,50 +132,48 @@ The core challenge remains unsolved: fundamental \textbf{information loss}. Anal
 
 % \subsection{Thesis Organization}
 The remainder of this thesis is organized as follows:
-
-\textbf{Section \ref{chap:background}} (\emph{Background on PET Imaging and Incomplete Ring Geometry}) provides an overview of PET physics, principles of coincidence detection, and the main challenges introduced by incomplete rings. We also summarize classical and modern reconstruction methods.
-
+\textbf{Section \ref{chap:background}} (\emph{Background on PET Imaging and Incomplete Ring Geometry}) provides an overview of PET and its basic physics like principles of coincidence detection, and the main problems caused by incomplete rings. We also summarize classical and modern reconstruction methods.
 \textbf{Section \ref{chap:methods}} (\emph{Fundamentals of Diffusion Probabilistic Models}) details the background of Denoising Diffusion Probabilistic Models (DDPM) and how they apply to various image reconstruction tasks, establishing the theoretical foundation for our proposed method. \emph{Proposed Coarse-to-Fine Reconstruction Framework}) describes the detailed workflow of our method, including complete and incomplete ring geometric modeling, creation of list-mode and sinogram data, the coarse-to-fine design, auxiliary guidance modules, contrastive diffusion learning objectives, and implementation details.
+\textbf{Section \ref{chap:results}} (\emph{Experiments and Results}) presents our experimental setups including the restoration of both sinogram and its reconstruction. We also include hyperparameter choices, metrics to assess the performance of our model, and comparisons with other excellent methods. 
+\textbf{Section \ref{chap:conclusion}} (\emph{Summary and Prospective}) summarizes our findings by analysing metrices of model performance on test dataset, and discusses limitations and directions for future improvements.
+\textbf{Appendices} provide additional experiments, extended qualitative results, and tables of hyperparameters used in the study.
 
-\textbf{Section \ref{chap:results}} (\emph{Experiments and Results}) presents our experimental setups, hyperparameter choices, evaluation metrics, ablation studies, and comparisons with state-of-the-art methods. We also present results of cross-dataset evaluation on in-house datasets.
 
-\textbf{Section \ref{chap:conclusion}} (\emph{Conclusion and Future Work}) summarizes our findings, discusses limitations, and suggests directions for future research, including potential improvements for real-world incomplete ring PET scanners.
 
-\textbf{Appendices} provide additional experiments, extended qualitative results, and tables of hyperparameters used in the thesis.
 
 \section{Background on PET Imaging and Incomplete Ring Geometry}
+
 \label{chap:background}
+
 \subsection{System Model and Data Simulation}
-This section outlines the fundamental aspects of PET imaging and the particular challenges posed by incomplete detector rings. While most readers will be familiar with basic PET principles, understanding the specific complications that arise from missing detectors is crucial to appreciating our approach.
+
+% This section outlines the fundamental aspects of PET imaging and the particular difficulties presented by incomplete detector rings. While most readers will be familiar with basic PET principles, understanding the specific complications that arise from missing detectors is important to appreciating our approach.
+
+
 
 % \subsection{Principles of PET Imaging}
-PET imaging relies on a deceptively simple concept with remarkably complex implementation. Radioactive tracers—typically compounds labeled with $^{18}\text{F}$, $^{15}\text{O}$, or $^{11}\text{C}$—are introduced into the body, where they participate in metabolic processes. As these nuclides decay, each emits a positron that quickly encounters an electron, triggering an annihilation event. This collision produces a signature pair of gamma photons, each carrying precisely 511 keV of energy, traveling in nearly opposite directions.
+
+% PET imaging relies on a deceptively simple concept with remarkably complex implementation. Radioactive tracers—typically compounds labeled with $^{18}\text{F}$, $^{15}\text{O}$, or $^{11}\text{C}$—are introduced into the body, where they participate in metabolic processes. As these nuclides decay, each one will emit a positron that quickly encounters an electron, triggering an annihilation event. This collision produces a signature pair of gamma photons, each carrying precisely 511 keV of energy, traveling in nearly opposite directions.
+
+
 
 % \begin{figure*}[htbp]
+
 %     \centering
+
 %     \vspace{-0.2cm}
+
 %     \includegraphics[width=0.9\textwidth]{Images/Screenshot2025-02-07214940}
+
 %     \vspace{-0.2cm}
+
 %     \caption{Schematic diagram of PET detection, where the red dot represents the detector center, the green dot represents the annihilation event location, and the two blue dots represent the centers of the two detectors that detect the gamma rays. This figure is only illustrative; the detector parameters in the figure do not equal the actual simulation parameters.}
+
 %     \vspace{-0.2cm}
+
 %     \label{fig:pet_event}
+
 % \end{figure*}
-
-What makes PET so valuable—and challenging—is the detection of these photon pairs. When two detectors register gamma photons within a narrow time window (typically 6-12 nanoseconds), we assume they originated from the same annihilation event. This paired detection establishes a line of response (LOR) between the two detector elements.
-
-PET systems record these events in one of two primary formats. In \textbf{list-mode data}, each coincidence is logged individually with precise identification of the detector pair and timestamp. This approach preserves the maximum temporal information but generates enormous datasets. Alternatively, \textbf{sinogram data} groups coincidences into bins based on their radial, angular, and axial coordinates, forming a structured histogram that sacrifices some temporal resolution for data manageability. Conventional PET scanners employ complete 360$^\circ$ detector rings to achieve uniform LOR sampling—but what happens when this ideal geometry isn't possible?
-
-\subsection{Incomplete Ring PET Scanners}
-
-Incomplete ring configurations emerge from a clash between ideal physics and practical reality. Budget constraints often drive this compromise—each detector module represents significant cost, and reducing their number can make PET technology accessible to more facilities. In specialized applications, partial ring designs actually offer advantages: breast imaging benefits from closer detector positioning, interventional procedures require open scanner designs, and claustrophobic patients experience less anxiety with more open configurations.
-
-We've even witnessed this problem firsthand during our research. System maintenance frequently took detector modules offline, creating temporary incomplete ring scenarios that compromised image quality. These experiences highlighted that incomplete ring problems aren't merely theoretical—they're practical challenges that imaging centers regularly face.
-
-The consequences of missing detectors are profound. LORs that would normally pass through the missing sections simply vanish from the dataset, creating angular sampling gaps. This incomplete sampling fundamentally undermines classical reconstruction algorithms that assume uniform angular coverage. The resulting images suffer from streak artifacts, elevated noise levels, and—most concerning for clinical applications—quantitative inaccuracies in tracer uptake measurements. Regions depending heavily on the missing LORs show particularly severe degradation, potentially biasing critical clinical indices like standardized uptake values (SUVs) and compromising diagnostic accuracy. These effects are starkly visible in Figure~\ref{fig:pet_incomplete_reconstruction}.
-
-\subsection{System Model and Data Simulation}
-
-To address these challenges systematically, we developed a comprehensive simulation framework modeling both complete and incomplete PET geometries. Our approach begins with a standard ring configuration of $R$ axial rings (we used $R=42$ in our experiments), each containing $D=182$ detectors arranged cylindrically. The scanner radius ($\rho$) of 253.71 mm balances spatial resolution against sensitivity.
 
 \begin{figure*}[htbp]
     \centering
@@ -180,17 +188,58 @@ To address these challenges systematically, we developed a comprehensive simulat
     \label{fig:pet_structures2}
 \end{figure*}
 
-Early in our research, we attempted to use Transformer-based approaches for direct 3D image recovery, following Hatamizadeh et al.'s UNETR framework \cite{hatamizadeh2021unetrtransformers3dmedical}. The initial results seemed promising in controlled simulations, but when applied to our incomplete ring data, these methods collapsed entirely. After weeks of frustrating tuning attempts, we realized the fundamental issue: geometric information alone was insufficient for high-quality reconstruction when large angular segments were missing. The UNETR approach, while powerful for segmentation tasks with complete data, couldn't bridge the fundamental information gaps in our scenario.
+When two detectors measure gamma photons within a narrow time window (typically 6-12 nanoseconds), we assume they are from the same annihilation event. This paired detection forms a line of response (LOR) between the two detectors.
+PET systems record these events in one of two primary formats. In \textbf{list-mode data}, each coincidence is logged individually with precise identification of the detector pair and timestamp. This approach saves the maximum amount of information but generates enormous datasets. \textbf{Sinogram data} organizes coincidence events into radial, angular, and axial bins, creating a structured histogram that trades off temporal resolution for simpler processing. Standard PET scanners use 360$^\circ$ detector rings to achieve uniform LOR sampling, but things would be quite different when this ideal geometry isn't possible.
 
-This failure forced us to reconsider our entire approach. Rather than attempting direct image-domain recovery, we pivoted to a two-stage method—first converting listmode data to sinograms with missing sections, then applying specialized techniques to complete these sinograms before final reconstruction. This approach, while computationally more intensive, provided a more principled way to address the missing data problem.
 
-For simulation purposes, we mapped a $128\times128\times128$ voxel grid to physical space, yielding in-plane voxel dimensions of approximately 1.95 mm:
+
+\subsection{Incomplete Ring PET Scanners}
+
+
+
+Incomplete ring configurations emerge from a clash between ideal physics and practical reality. Budget constraints often drive this compromise—each detector module constitutes a substantial cost, and reducing their number can make PET technology accessible to more facilities. In specialized applications, partial ring designs actually provide benefits: breast imaging benefits from closer detector positioning, interventional procedures require open scanner designs, and claustrophobic patients experience less anxiety with more open configurations.
+
+
+
+% We've even witnessed this problem firsthand during our research. System maintenance frequently took detector modules offline, creating temporary incomplete ring scenarios that compromised image quality. These experiences highlighted that incomplete ring problems aren't merely theoretical—they're real-life problems that imaging centers regularly face.
+
+
+The consequences of missing detectors are profound. 
+LORs that would normally pass through the missing sections simply vanish from the dataset, creating angular sampling gaps. We will see a mess if we directly reconstruct the image out of incomplete sinogram, as shown in Figure~\ref{fig:pet_incomplete_reconstruction}.
+% This incomplete sampling fundamentally undermines classical reconstruction algorithms that assume uniform angular coverage. The resulting images suffer from streak artifacts, elevated noise levels, and—most concerning for clinical applications—quantitative inaccuracies in tracer uptake measurements. Regions depending heavily on the missing LORs show particularly severe degradation, potentially biasing critical clinical indices like standardized uptake values (SUVs) and compromising diagnostic accuracy. 
+% These effects are 
+
+\subsection{System Model and Data Simulation}
+
+To deal with these problems systematically, we made a thorough simulation framework modeling both complete and incomplete PET geometries. Our approach begins with a standard ring configuration of $R$ axial rings (we used $R=42$ in our experiments), each containing $D=182$ detectors arranged cylindrically. The scanner radius ($\rho$) of 253.71 mm balances spatial resolution against sensitivity.
+
+Early in our research, we attempted to use Transformer-based approaches for direct 3D image recovery, following Hatamizadeh et al.'s UNETR framework \cite{hatamizadeh2021unetrtransformers3dmedical}. The segmentation results were excellent, but when applied to our incomplete sinogram data, these methods did not work well, with SSIM of less than 0.2 even after a long time of training. This indicates that mere geometric information is insufficient for high-quality reconstruction when some angular segments are missing. 
+% The UNETR approach, while powerful for segmentation tasks with complete data, couldn't bridge the fundamental information gaps in our scenario.
+
+
+
+% This failure forced us to reconsider our entire approach. 
+From listmode to sinogram, and from sinogram to reconstruction, the information is constantly losing. So, rather than attempting direct image-domain recovery, we pivoted to a two-stage method—first converting listmode data to sinograms with missing sections, then applying specialized techniques to complete these sinograms before final reconstruction. This approach, while computationally more intensive, provided a more appliable way to solve the missing data problem by retaining as much information as possible from sinogram.
+
+
+
+For simulation purposes, we mapped a $128\times128\times128$ voxel grid to physical space, yielding in-plane voxel dimensions of approximately 2.78 mm:
 
 \begin{equation}
-\Delta x \approx \Delta y \approx \frac{25\,\text{cm}}{128} \approx 1.95\,\text{mm}.
+\Delta x \approx \Delta y \approx \frac{25\,\text{cm}}{128} \approx 2.78\,\text{mm}.
 \end{equation}
 
-The detector system itself employs a hierarchical structure with parameters that proved challenging to optimize. Table \ref{tab:detector_params} details the key configuration parameters of our PET system.
+\begin{figure*}[htbp]
+    \centering
+    \vspace{-0.2cm}
+    \includegraphics[width=0.8\textwidth]{Images/output2}
+    \vspace{-0.2cm}
+    \caption{Comparison of reconstruction results from incomplete rings with the original image, showing that the two are vastly different, demonstrating that direct reconstruction from incomplete rings is not feasible.}
+    \vspace{-0.2cm}
+    \label{fig:pet_incomplete_reconstruction}
+\end{figure*}
+
+The detector system itself employs a hierarchical structure with parameters that were hard to optimize. Table \ref{tab:detector_params} describes some important configuration parameters of our PET system.
 
 \begin{table}[htbp]
     \centering
@@ -215,29 +264,24 @@ The detector system itself employs a hierarchical structure with parameters that
     \end{tabular}
 \end{table}
 
-What the table doesn't convey is how these parameters complicated our modeling efforts. The irregular spacing between detector elements—not quite uniform due to manufacturing tolerances—initially threw off our system matrix calculations. During our first reconstruction attempts, we observed bizarre distortion artifacts that we eventually traced to millimeter-scale discrepancies in detector positioning. These subtle errors propagated through the reconstruction process, creating systematic biases that took us nearly a month to properly correct through careful normalization procedures.
+Our theoretical model parameters is an idealized PET system, setting aside real-world manufacturing variations that would typically require complex normalization procedures. 
+While our framework includes parameters for TOF detection, we chose not to implement this capability in the current work, because the devices to which we intend to apply this study do not have that hign temporal resolution. 
 
-Data acquisition uses list-mode format for maximum flexibility. Our system technically supports time-of-flight detection with 29 time bins, though the practical resolution (approximately 58 mm FWHM) proved disappointing in practice. Based on literature, we had high hopes that TOF would compensate for missing angles, but our experiments revealed minimal benefit at current resolution levels—a frustrating limitation that forced us to rely more heavily on post-processing methods.
+Similarly, our simulation framework does not account for attenuation correction problems needing MRI or CT data in physical implementations—an important consideration for future translation of our approach. Our simulation generates idealized datasets by ray-tracing approximately 20 million emission events from $128^3$-voxel phantom images, creating perfectly clean list-mode data without the noise and artifacts present in real-world situation. Because some photon pairs are not recieved by detectors, the number of events in the listmode is about 8 million.
 
-A critical challenge we hadn't anticipated was the absence of reliable attenuation correction. Our initial experiments assumed we could derive approximate $\mu$ maps from the emission data itself, but this approach introduced unacceptable artifacts in regions with complex tissue interfaces. Without complementary MRI or CT data, our reconstructions contain uncorrected attenuation artifacts that compromise quantitative accuracy, a limitation that affects both complete and incomplete ring scenarios but particularly complicates the assessment of our methods' performance.
+The complete ring configuration (Figure~\ref{fig:pet_structures2}) provides our reference reconstruction $\mathbf{Y}_A$, representing the best-case scenario with full angular sampling. For incomplete ring experiments (Figure~\ref{fig:pet_structures2}), we selectively remove detectors—either entire rings or angular segments—and generate a degraded reconstruction $\mathbf{Y}_B$ from the resulting partial data. The striking quality difference between $\mathbf{Y}_A$ and $\mathbf{Y}_B$ shows the reconstruction challenge we aim to solve, as shown in Figure~\ref{fig:pet_incomplete_reconstruction}
 
-Our simulation process creates both complete and incomplete datasets from the same ground truth images. We begin with high-resolution brain PET volumes ($128^3$ voxels) and generate approximately 20 million emission events according to the tracer distribution. For each event, we simulate annihilation physics and use ray-tracing to determine detector interactions, creating list-mode data that we can optionally convert to sinograms. 
-
-The complete ring configuration (Figure~\ref{fig:pet_structures2}) provides our reference reconstruction $\mathbf{Y}_A$, representing the best-case scenario with full angular sampling. For incomplete ring experiments (Figure~\ref{fig:pet_structures2}), we selectively remove detectors—either entire rings or angular segments—and generate a degraded reconstruction $\mathbf{Y}_B$ from the resulting partial data. The striking quality difference between $\mathbf{Y}_A$ and $\mathbf{Y}_B$ highlights the reconstruction challenge we aim to solve.
 \subsection{Conventional PET Reconstruction Methods}
 
 Before proposing new solutions, we thoroughly evaluated existing reconstruction approaches. \textbf{Analytical methods} like filtered backprojection (FBP) quickly proved inadequate for incomplete data. While computationally efficient, FBP's assumption of complete angular sampling produces severe streak artifacts when confronted with missing sectors. These artifacts aren't merely cosmetic—they can obscure subtle uptake variations that might indicate pathology.
 
 More promising are \textbf{maximum likelihood methods}, particularly MLEM and its faster variant OSEM \cite{363108}. These techniques incorporate the Poisson statistics of photon counting and can accommodate some degree of data incompleteness. The core of these approaches is the \textbf{system model}, which relates image voxels to measured projections:
-
 \begin{equation}
     y_i \;\approx\; \sum_{j} p_{ij}\,\lambda_j,
 \end{equation}
-
 Here, $\lambda_j$ represents the activity in voxel $j$, $y_i$ is the count measured in projection $i$, and $p_{ij}$ describes the probability that an emission from voxel $j$ is detected along projection $i$. This \textbf{system matrix} $p_{ij}$ encapsulates all the physics—from detector geometry to attenuation effects—that connects the unknown tracer distribution to our measurements.
 
 MLEM iteratively updates the estimate of $\lambda_j$ according to:
-
 \begin{equation}
     \lambda_j^{(k+1)}
     \;=\;
@@ -246,9 +290,7 @@ MLEM iteratively updates the estimate of $\lambda_j$ according to:
     \frac{\displaystyle \sum_{i=1}^{N} \frac{p_{ij}}{\sum_{\ell} p_{i\ell}\,\lambda_{\ell}^{(k)}} \; y_i}
     {\displaystyle \sum_{i=1}^{N} p_{ij}}  ,
 \end{equation}
-
 While mathematically elegant, MLEM's convergence proves painfully slow for large datasets. OSEM accelerates this process by dividing projections into subsets, updating the image estimate using only one subset at a time:
-
 \begin{equation}
     \lambda_j^{(k+1)}
 \;=\;
@@ -257,20 +299,26 @@ While mathematically elegant, MLEM's convergence proves painfully slow for large
 \frac{\displaystyle \sum_{i \in S_{k}} \frac{p_{ij}}{\sum_{\ell} p_{i\ell}\,\lambda_{\ell}^{(k)}} \; y_i}
 {\displaystyle \sum_{i \in S_{k}} p_{ij}}
 \end{equation}
-
-\begin{figure*}[htbp]
+% \begin{figure}[htbp]
+%     \centering
+%     \vspace{-0.2cm}
+%     \includegraphics[width=0.48\textwidth]{Images/output}
+%     \vspace{-0.2cm}
+%     \caption{Comparison of original image and image reconstructed using the OSEM method}
+%     \vspace{-0.2cm}
+%     \label{fig:pet_reconstruction}
+% \end{figure}
+\begin{figure*}[ht]
     \centering
-    \vspace{-0.2cm}
-    \includegraphics[width=0.9\textwidth]{Images/output}
-    \vspace{-0.2cm}
-    \caption{Comparison of original image and image reconstructed using the OSEM method}
-    \vspace{-0.2cm}
-    \label{fig:pet_reconstruction}
+    \includegraphics[width=\textwidth]{Images/reconstruction_workflow}
+    \vspace{-.5cm}
+    \caption{Overall flow diagram of the incomplete ring PET reconstruction method. First, incomplete sinograms due to missing detectors (top left) are repaired through a U-Net deep learning model to generate complete sinogram data (top right). Subsequently, the complete sinogram is converted into a PET image (bottom right) using the OSEM iterative reconstruction algorithm. For comparison, the bottom left image shows a PET image reconstructed directly from incomplete data using a coarse-to-fine framework (dual-model architecture with U-Net and diffusion model). This method effectively compensates for data loss caused by incomplete ring geometry, achieving high-quality brain PET image reconstruction that preserves key anatomical structures and tracer distribution features.}
+    \vspace{-.2cm}
+    \label{fig:reconstruction_workflow}
 \end{figure*}
-
-Early in our experiments, we discovered that practical implementation matters tremendously. Rather than explicitly storing the massive system matrix, modern software calculates projections on-the-fly using matched projector/backprojector pairs. We based our work on the PyTomography library \cite{POLSON2025102020}, which leverages PyTorch's GPU acceleration to handle the computational burden. This choice proved crucial when processing the enormous datasets generated by our simulations.
-
-Figure~\ref{fig:pet_reconstruction} shows a comparison between original and OSEM-reconstructed images using complete data. While OSEM performs adequately with full angular sampling, its performance with incomplete rings proved disappointing. The missing angles create fundamental information gaps that iterative methods struggle to bridge, despite their statistical sophistication. 
+Early in our experiments, we discovered that practical implementation matters tremendously. Rather than explicitly storing the massive system matrix, modern software calculates projections on-the-fly using matched projector/backprojector pairs. We based our work mainly on the PyTomography library \cite{POLSON2025102020}, which uses PyTorch and GPUs to accelerate complex computations. This technique was especially useful when processing large datasets created from simulations.
+% Figure~\ref{fig:pet_reconstruction} shows a comparison between original and OSEM-reconstructed images using complete data. 
+While OSEM performs adequately with full angular sampling, its performance with incomplete rings proved disappointing. The missing angles create fundamental information gaps that iterative methods struggle to bridge, despite their statistical sophistication. 
 
 These limitations of conventional methods—analytical approaches failing completely and iterative techniques providing only marginal improvements—motivated our exploration of learning-based approaches that could potentially infer missing information based on structural and statistical patterns in PET data.
 
@@ -288,18 +336,18 @@ These limitations of conventional methods—analytical approaches failing comple
 
 As shown in Figure \ref{fig:reconstruction_workflow}, this study proposes an innovative incomplete ring PET reconstruction framework that effectively addresses the data incompleteness problem caused by missing detectors through a multi-stage strategy. In the first stage, the system first processes incomplete sinograms (top left) resulting from missing detectors, completing the missing data through a trained optimized U-Net deep learning model to generate complete sinograms (top right). This sinogram restoration process fully utilizes the five-channel input strategy described in Chapter 3, effectively integrating spatial and temporal context information.
 
-\begin{figure*}[ht]
-    \centering
-    \includegraphics[width=\textwidth]{Images/reconstruction_workflow}
-    \vspace{-.5cm}
-    \caption{Overall flow diagram of the incomplete ring PET reconstruction method. First, incomplete sinograms due to missing detectors (top left) are repaired through a U-Net deep learning model to generate complete sinogram data (top right). Subsequently, the complete sinogram is converted into a PET image (bottom right) using the OSEM iterative reconstruction algorithm. For comparison, the bottom left image shows a PET image reconstructed directly from incomplete data using a coarse-to-fine framework (dual-model architecture with U-Net and diffusion model). This method effectively compensates for data loss caused by incomplete ring geometry, achieving high-quality brain PET image reconstruction that preserves key anatomical structures and tracer distribution features.}
-    \vspace{-.2cm}
-    \label{fig:reconstruction_workflow}
-\end{figure*}
+
 
 % \subsection{U-net Deep Learning Model}
 
-
+\begin{figure*}[htbp]
+    \centering
+    \vspace{-.2cm}
+    \includegraphics[width=0.7\textwidth]{Images/Unet.png}
+    \vspace{-.3cm}
+    \caption{Attention U-Net architecture diagram, showing how the attention gating mechanism enhances skip connection features.}
+    \label{fig:unet_structure}
+\end{figure*}
 \subsection{Sinogram Reconstruction Based on Attention U-Net}
 
 Although traditional U-Net performs excellently in medical image segmentation and reconstruction tasks, it lacks the ability to selectively focus on key features when dealing with complex incomplete ring PET sinogram restoration problems. The Attention U-Net adopted in this study enhances the model's perception of important feature regions through spatial attention mechanisms while suppressing the influence of irrelevant features, which is crucial for restoring sinograms from incomplete data.
@@ -319,14 +367,7 @@ After processing through the attention gate, the features can be represented as:
 \end{equation}
 
 This mechanism allows Attention U-Net to adaptively focus on important image regions while maintaining the advantages of the original U-Net's encoder-decoder structure, particularly in cases of severe angular loss, with a stronger perception of sinogram continuity and consistency.
-\begin{figure*}[htbp]
-    \centering
-    \vspace{-.2cm}
-    \includegraphics[width=0.7\textwidth]{Images/Unet.png}
-    \vspace{-.3cm}
-    \caption{Attention U-Net architecture diagram, showing how the attention gating mechanism enhances skip connection features.}
-    \label{fig:unet_structure}
-\end{figure*}
+
 In the experimental implementation, we integrated AG modules into the skip connection path at each decoding stage, using $1\times1$ convolution to reduce channel dimensions, followed by applying attention coefficients for feature selection. This design enables the model to more precisely restore missing data when processing incomplete sinograms containing large-scale angular losses, while maintaining overall structural consistency and accurate signal distribution.
 
 Experimental results show that compared to standard U-Net, Attention U-Net achieved significant improvements in sinogram reconstruction tasks, with an average increase of 1.24dB in PSNR metrics and 0.052 in SSIM metrics, validating the effectiveness of the attention mechanism in processing incomplete ring PET data.
@@ -401,7 +442,7 @@ However, directly applying DPMs for reconstruction introduces challenges related
 To effectively address reconstruction challenges in incomplete ring PET imaging, we propose a two-stage approach that balances reconstruction quality with computational efficiency.
 \begin{figure}[ht]
     \centering
-    \includegraphics[width=0.49\textwidth]{Images/C2F.png}
+    \includegraphics[width=0.48\textwidth]{Images/C2F.png}
     \caption{Overview of the coarse-to-fine incomplete ring PET reconstruction framework. The method contains two key modules: the Coarse Prediction Module (CPM) and the Iterative Refinement Module (IRM). The system first receives low-quality PET images (LPET) and auxiliary guidance information as input. The CPM generates preliminary reconstruction results (coarse prediction) through a single forward pass. Subsequently, the IRM, based on diffusion probabilistic models, reconstructs the residual signal through T iterative steps. Finally, the system combines the coarse prediction with the reconstructed residual to generate a high-quality refined PET image (RPET). This dual-stage design effectively balances computational efficiency with reconstruction quality, overcoming the limitations of traditional diffusion models in terms of computational cost.}
     \label{fig:coarse_to_fine_framework}
 \end{figure}
@@ -510,15 +551,7 @@ where $X$ and $\hat{X}$ are the original and reconstructed images respectively. 
 
 
 
-\begin{figure*}[htbp]
-    \centering
-    \vspace{-0.2cm}
-    \includegraphics[width=0.7\textwidth]{Images/output2}
-    \vspace{-0.2cm}
-    \caption{Comparison of reconstruction results from incomplete rings with the original image, showing that the two are vastly different, demonstrating that direct reconstruction from incomplete rings is not feasible.}
-    \vspace{-0.2cm}
-    \label{fig:pet_incomplete_reconstruction}
-\end{figure*}
+
 
 Figure~\ref{fig:pet_incomplete_reconstruction} shows the comparison between directly reconstructed results without any correction and the original image. As can be seen, due to incomplete sampling caused by data loss, there are significant differences between the directly reconstructed image and the original image. These phenomena indicate that traditional PET reconstruction methods face difficulties when applied to incomplete ring PET geometries, necessitating new methods to address the data loss problem.
 
