@@ -145,7 +145,7 @@ The remainder of this thesis is organized as follows:
 
 \label{chap:background}
 
-\subsection{System Model and Data Simulation}
+% \subsection{System Model and Data Simulation}
 
 % This section outlines the fundamental aspects of PET imaging and the particular difficulties presented by incomplete detector rings. While most readers will be familiar with basic PET principles, understanding the specific complications that arise from missing detectors is important to appreciating our approach.
 
@@ -350,9 +350,12 @@ As shown in Figure \ref{fig:reconstruction_workflow}, this study proposes an inn
 \end{figure*}
 \subsection{Sinogram Reconstruction Based on Attention U-Net}
 
-Although traditional U-Net performs excellently in medical image segmentation and reconstruction tasks, it lacks the ability to selectively focus on key features when dealing with complex incomplete ring PET sinogram restoration problems. The Attention U-Net adopted in this study enhances the model's perception of important feature regions through spatial attention mechanisms while suppressing the influence of irrelevant features, which is crucial for restoring sinograms from incomplete data.
 
-The core innovation of Attention U-Net lies in the introduction of attention gating (AG) modules in the skip connection path of the standard U-Net, as shown in Figure~\ref{fig:unet_structure}. These AG modules can adaptively highlight significant structures in the feed-forward feature maps while suppressing irrelevant regions that might lead to prediction errors. For sinogram reconstruction tasks, this mechanism is particularly effective because it can selectively focus on structural features around missing areas, thereby more accurately inferring missing angular data. The mathematical expression of attention gating can be formalized as:
+
+Although traditional U-Net performs excellently in medical image segmentation and reconstruction tasks \cite{ronneberger2015unetconvolutionalnetworksbiomedical}, it lacks the ability to selectively focus on key features when dealing with complex incomplete ring PET sinogram restoration problems. The Attention U-Net \cite{oktay2018attentionunetlearninglook} adopted in this study enhances the model's perception of important feature regions through spatial attention mechanisms while suppressing the influence of irrelevant features, which is more useful for restoring sinograms from incomplete data. We also tested some transformer-based U-Net like UNETR \cite{hatamizadeh2021unetrtransformers3dmedical}, which combines ViT encoder and convolutional decoder, and TransUNet \cite{chen2021transunettransformersmakestrong}, where both encoder and decoder are completely based on transformers. But they are slightly outperformed by Attention U-Net.
+
+The main innovation of Attention U-Net is the introduction of attention gating (AG) modules in the skip connection path of the original U-Net, as shown in Figure~\ref{fig:unet_structure}. These AG modules can adaptively highlight significant structures in the feed-forward feature maps while suppressing less relevant regions. 
+For sinogram reconstruction tasks, this mechanism is especially useful as it can selectively focus on structural features around missing areas, and then more accurately infer missing angular data. The mathematical expression of attention gating can be described as \cite{oktay2018attentionunetlearninglook}:
 
 \begin{equation}
 \alpha_i^l = \sigma_2(\psi^T(\sigma_1(W_x^T x_i^l + W_g^T g_i + b_g)) + b_\psi)
@@ -366,34 +369,62 @@ After processing through the attention gate, the features can be represented as:
 \hat{x}_i^l = x_i^l \cdot \alpha_i^l
 \end{equation}
 
-This mechanism allows Attention U-Net to adaptively focus on important image regions while maintaining the advantages of the original U-Net's encoder-decoder structure, particularly in cases of severe angular loss, with a stronger perception of sinogram continuity and consistency.
+The Attention gates learn to focus on relevant regions of the encoder feature maps by assigning weights based on the context, particularly in cases of severe angular loss. AGs can create a stronger understanding of sinogram continuity and consistency.
 
-In the experimental implementation, we integrated AG modules into the skip connection path at each decoding stage, using $1\times1$ convolution to reduce channel dimensions, followed by applying attention coefficients for feature selection. This design enables the model to more precisely restore missing data when processing incomplete sinograms containing large-scale angular losses, while maintaining overall structural consistency and accurate signal distribution.
+% In the experimental implementation, we integrated AG modules into the skip connection path at each decoding stage, using $1\times1$ convolution to reduce channel dimensions, followed by applying attention coefficients for feature selection. This design enables the model to more precisely restore missing data when processing incomplete sinograms containing large-scale angular losses, while maintaining overall structural consistency and accurate signal distribution.
 
-Experimental results show that compared to standard U-Net, Attention U-Net achieved significant improvements in sinogram reconstruction tasks, with an average increase of 1.24dB in PSNR metrics and 0.052 in SSIM metrics, validating the effectiveness of the attention mechanism in processing incomplete ring PET data.
+After testing on our dataset, the results showed that Attention U-Net performs better with an average increase of 1.24dB in PSNR and 0.052 in SSIM compared to original U-Net in sinogram reconstruction tasks. This means that attention mechanism is more effective in processing incomplete ring PET data.
 
-Sinogram repair plays a crucial role in incomplete ring PET imaging, with its quality directly affecting the precision of reconstructed images. The training dataset used in this study consists of multidimensional tensors that effectively capture spatial and temporal context information, essential for accurate sinogram restoration. Each sinogram slice is expanded into a five-channel tensor, systematically integrating slices from spatial and temporal neighborhoods. As shown in Figure~\ref{fig:sinogram_structure}, the central channel of each input tensor corresponds to the current sinogram slice, while the direct spatial neighbors (slices $j-1$ and $j+1$) and temporal neighbors from previous and subsequent sinogram periods (slices $j-N_2$ and $j+N_2$) constitute the other four channels. These neighboring slices are crucial for enriching the model's understanding of local structural continuity and temporal consistency.
+Sinogram repair is very important in incomplete ring PET imaging, as its quality directly affects the precision of reconstructed images. 
+The shape of sinogram tensors is $(D, 2D+1, R^2)$, or $(182, 365, 1764)$ in our work, where $R$ is the number of axial rings and $D$ is the number of detectors each ring. And it is obvious that this tensor is too large to be directly fed into any UNet-like models. So we cut this large $(D, 2D+1, R^2)$ tensor into $R\times(D, 2D+1, R)$ tensors. 
+As shown in Figure~\ref{fig:sinogram_structure}, the central channel of each input tensor corresponds to the current sinogram slice, while the direct spatial neighbors (slices $j-1$ and $j+1$) and temporal neighbors from previous and subsequent sinogram periods (slices $j-R$ and $j+R$) constitute the other four channels. For boundary handling, when adjacent indices exceed the dataset range, the central slice itself is used for channel filling, ensuring input dimension consistency. These neighboring slices are important for improving the model's understanding of local structural continuity and temporal consistency. So finally we have $1764\times(182, 365, 5)$ tensors for each sinogram.
+% Thus, the training dataset used in this study consists of multidimensional tensors that effectively capture spatial and temporal context information, which is essential for sinogram restoration. Each sinogram slice is expanded into a 5-channel tensor, combining slices from spatial and temporal neighborhoods. 
 
 \begin{figure*}[htbp]
 \centering
 \vspace{-.3cm}
 \includegraphics[width=0.96\textwidth]{Images/fdafads.pdf}
 \vspace{-.3cm}
-\caption{Visualization of the five-channel tensor preparation of sinogram data for training. Each cube represents a sinogram slice block with dimensions $(N_1, 2N_1+1, N_2)$. The orange highlighted parts are the selected slices ($j-N_2, j-1, j, j+1, j+N_2$), which form the five-channel input for the restoration model, showing the spatial and temporal relationships captured in each input tensor.}
+\caption{Visualization of the five-channel tensor preparation of sinogram data for training. Each cube represents a sinogram slice block with dimensions $(D, 2D+1, R^2)$. The orange highlighted parts are the selected slices ($j-R, j-1, j, j+1, j+R$), which form the five-channel input for the restoration model, showing the spatial and temporal relationships captured in each input tensor.}
 \label{fig:sinogram_structure}
 \end{figure*}
 
 
-In this study, a five-channel input tensor is used to construct training data. For each central slice $j$, a multidimensional feature is built by fusing its spatial adjacent slices ($j-1$ and $j+1$) with temporal adjacent slices ($j-42$ and $j+42$). Boundary handling adopts a mirror padding strategy: when adjacent indices exceed the dataset range, the central slice itself is used for channel filling, ensuring input dimension consistency. Finally, each training sample forms a $5\times H\times W$ tensor, effectively integrating spatiotemporal neighborhood information.\par
+% In this study, a five-channel input tensor is used to construct training data. For each central slice $j$, a multidimensional feature is built by fusing its spatial adjacent slices ($j-1$ and $j+1$) with temporal adjacent slices ($j-42$ and $j+42$). Boundary handling adopts a mirror padding strategy: when adjacent indices exceed the dataset range, the central slice itself is used for channel filling, ensuring input dimension consistency. Finally, each training sample forms a $5\times H\times W$ tensor, effectively integrating spatiotemporal neighborhood information.\par
 
 The network architecture adopts an improved U-Net model (see Table\ref{tab:unet_architecture}), with an encoder-decoder structure including convolution, pooling, upsampling, and skip connection modules. The encoder part uses $3\times3$ convolution kernels with batch normalization and ReLU activation functions, implementing feature dimensionality reduction through max pooling; the decoder uses transposed convolution/bilinear interpolation for resolution recovery, and shallow detail features are fused through skip connections. The bottleneck layer achieves high-level semantic representation through 1024-dimensional features.
 
+\begin{table}[htbp]
+    \centering
+    \caption{Five-channel U-Net network structure parameters}
+    \label{tab:unet_architecture}
+    \begin{tabular}{@{}lccc@{}}
+    \toprule
+    \textbf{Description} & \textbf{Type} & \textbf{Kernel Size} & \textbf{Output Channel} \\ \midrule
+    Input & - & - & 5 \\
+    Encoder Block 1 & Conv-BN-ReLU & 3 × 3 & 64 \\
+    Pooling & Max Pooling & 2 × 2 & 64 \\
+    Encoder Block 2 & Conv-BN-ReLU & 3 × 3 & 128 \\
+    Pooling & Max Pooling & 2 × 2 & 128 \\
+    Encoder Block 3 & Conv-BN-ReLU & 3 × 3 & 256 \\
+    Pooling & Max Pooling & 2 × 2 & 256 \\
+    Encoder Block 4 & Conv-BN-ReLU & 3 × 3 & 512 \\
+    Pooling & Max Pooling & 2 × 2 & 512 \\
+    Bottleneck & Conv-BN-ReLU & 3 × 3 & 1024 \\
+    Decoder Block 1 & Upsampling + Conv-BN-ReLU & 3 × 3 & 512 \\
+    Decoder Block 2 & Upsampling + Conv-BN-ReLU & 3 × 3 & 256 \\
+    Decoder Block 3 & Upsampling + Conv-BN-ReLU & 3 × 3 & 128 \\
+    Decoder Block 4 & Upsampling + Conv-BN-ReLU & 3 × 3 & 64 \\
+    Output Layer & Conv & 1 × 1 & 5 \\ \bottomrule
+    \end{tabular}
+\end{table}
 
 
-Model training uses the Adam optimizer with an initial learning rate of $10^{-4}$ and introduces $10^{-5}$ weight decay to prevent overfitting. Training efficiency is enhanced through mixed precision computation and gradient scaling techniques, combined with a ReduceLROnPlateau dynamic learning rate scheduler (with a decay factor of 0.3 when validation loss shows no improvement for 3 consecutive epochs), achieving stable convergence.
+Model training uses the Adam optimizer with an initial learning rate of $10^{-4}$ and introduces $10^{-5}$ weight decay to prevent overfitting. 
+Training efficiency is enhanced through mixed precision computation and gradient scaling techniques, combined with a ReduceLROnPlateau dynamic learning rate scheduler (with a decay factor of 0.3 when validation loss shows no improvement for 3 consecutive epochs), achieving stable convergence.
 
 
-On the validation set, the model achieved excellent performance with MSE=0.301745, PSNR=35.6421 dB, and SSIM=0.9588. The PSNR value indicates high fidelity of the reconstructed signal, while the SSIM metric validates the preservation of structural features. Experimental results show that the multi-channel U-Net method proposed in this paper can effectively improve sinogram repair quality, providing a reliable foundation for subsequent CT image reconstruction. This method significantly improves the limitations of traditional single-channel models by fusing spatiotemporal context information, offering a new technical approach for the medical imaging processing field.
+On the validation set, the model achieved excellent performance with MSE=0.301745, PSNR=35.6421 dB, and SSIM=0.9588. The PSNR value indicates high fidelity of the reconstructed signal, while the SSIM metric validates the preservation of structural features. Experimental results show that the multi-channel U-Net method proposed in this paper can effectively improve sinogram repair quality, giving a solid foundation for subsequent CT image reconstruction. This method significantly improves the limitations of traditional single-channel models by fusing spatiotemporal context information, giving a fresh technical approach for the medical imaging processing field.
 
 
 \subsection{Diffusion Probabilistic Models}
