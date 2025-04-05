@@ -341,21 +341,21 @@ As shown in Figure \ref{fig:reconstruction_workflow}, this study proposes an inn
 
 % \subsection{U-net Deep Learning Model}
 
-\begin{figure*}[htbp]
-    \centering
-    \vspace{-.2cm}
-    \includegraphics[width=0.7\textwidth]{Images/Unet.png}
-    \vspace{-.3cm}
-    \caption{Attention U-Net architecture diagram, showing how the attention gating mechanism enhances skip connection features.}
-    \label{fig:unet_structure}
-\end{figure*}
+% \begin{figure*}[htbp]
+%     \centering
+%     \vspace{-.2cm}
+%     \includegraphics[width=0.7\textwidth]{Images/Unet.png}
+%     \vspace{-.3cm}
+%     \caption{Attention U-Net architecture diagram, showing how the attention gating mechanism enhances skip connection features.}
+%     \label{fig:unet_structure}
+% \end{figure*}
 \subsection{Sinogram Reconstruction Based on Attention U-Net}
 
 
 
 Although traditional U-Net performs excellently in medical image segmentation and reconstruction tasks \cite{ronneberger2015unetconvolutionalnetworksbiomedical}, it lacks the ability to selectively focus on key features when dealing with complex incomplete ring PET sinogram restoration problems. The Attention U-Net \cite{oktay2018attentionunetlearninglook} adopted in this study enhances the model's perception of important feature regions through spatial attention mechanisms while suppressing the influence of irrelevant features, which is more useful for restoring sinograms from incomplete data. We also tested some transformer-based U-Net like UNETR \cite{hatamizadeh2021unetrtransformers3dmedical}, which combines ViT encoder and convolutional decoder, and TransUNet \cite{chen2021transunettransformersmakestrong}, where both encoder and decoder are completely based on transformers. But they are slightly outperformed by Attention U-Net.
 
-The main innovation of Attention U-Net is the introduction of attention gating (AG) modules in the skip connection path of the original U-Net, as shown in Figure~\ref{fig:unet_structure}. These AG modules can adaptively highlight significant structures in the feed-forward feature maps while suppressing less relevant regions. 
+The main innovation of Attention U-Net is the introduction of attention gating (AG) modules in the skip connection path of the original U-Net. These AG modules can adaptively highlight significant structures in the feed-forward feature maps while suppressing less relevant regions. 
 For sinogram reconstruction tasks, this mechanism is especially useful as it can selectively focus on structural features around missing areas, and then more accurately infer missing angular data. The mathematical expression of attention gating can be described as \cite{oktay2018attentionunetlearninglook}:
 
 \begin{equation}
@@ -384,7 +384,7 @@ As shown in Figure~\ref{fig:sinogram_structure}, the central channel of each inp
 \begin{figure*}[htbp]
 \centering
 \vspace{-.3cm}
-\includegraphics[width=0.96\textwidth]{Images/fdafads.pdf}
+\includegraphics[width=0.96\textwidth]{Images/slices.pdf}
 \vspace{-.3cm}
 \caption{Visualization of the five-channel tensor preparation of sinogram data for training. Each cube represents a sinogram slice block with dimensions $(D, 2D+1, R^2)$. The orange highlighted parts are the selected slices ($j-R, j-1, j, j+1, j+R$), which form the five-channel input for the restoration model, showing the spatial and temporal relationships captured in each input tensor.}
 \label{fig:sinogram_structure}
@@ -393,8 +393,9 @@ As shown in Figure~\ref{fig:sinogram_structure}, the central channel of each inp
 
 % In this study, a five-channel input tensor is used to construct training data. For each central slice $j$, a multidimensional feature is built by fusing its spatial adjacent slices ($j-1$ and $j+1$) with temporal adjacent slices ($j-42$ and $j+42$). Boundary handling adopts a mirror padding strategy: when adjacent indices exceed the dataset range, the central slice itself is used for channel filling, ensuring input dimension consistency. Finally, each training sample forms a $5\times H\times W$ tensor, effectively integrating spatiotemporal neighborhood information.\par
 
-The network architecture adopts an improved U-Net model (see Table\ref{tab:unet_architecture}), with an encoder-decoder structure including convolution, pooling, upsampling, and skip connection modules. The encoder part uses $3\times3$ convolution kernels with batch normalization and ReLU activation functions, implementing feature dimensionality reduction through max pooling; the decoder uses transposed convolution/bilinear interpolation for resolution recovery, and shallow detail features are fused through skip connections. The bottleneck layer achieves high-level semantic representation through 1024-dimensional features.
-
+% The network architecture adopts an improved U-Net model (see Table\ref{tab:unet_architecture}), with an encoder-decoder structure including convolution, pooling, upsampling, and skip connection modules. 
+% The encoder part uses $3\times3$ convolution kernels with batch normalization and ReLU activation functions, implementing feature dimensionality reduction through max pooling; the decoder uses transposed convolution/bilinear interpolation for resolution recovery, and shallow detail features are fused through skip connections. The bottleneck layer achieves high-level semantic representation through 1024-dimensional features.
+% The model structure is shown in 
 \begin{table}[htbp]
     \centering
     \caption{Five-channel U-Net network structure parameters}
@@ -420,12 +421,12 @@ The network architecture adopts an improved U-Net model (see Table\ref{tab:unet_
     \end{tabular}
 \end{table}
 
-
-Model training uses the Adam optimizer with an initial learning rate of $10^{-4}$ and introduces $10^{-5}$ weight decay to prevent overfitting. 
+The model structure is shown in Tabel~\ref{tab:unet_architecture}.
+Model training uses the Adam optimizer with an initial learning rate of $10^{-4}$ and adds   $10^{-5}$ weight decay to prevent overfitting. 
 Training efficiency is enhanced through mixed precision computation and gradient scaling techniques, combined with a ReduceLROnPlateau dynamic learning rate scheduler (with a decay factor of 0.3 when validation loss shows no improvement for 3 consecutive epochs), achieving stable convergence.
 
 
-On the validation set, the model achieved excellent performance with MSE=0.301745, PSNR=35.6421 dB, and SSIM=0.9588. The PSNR value indicates high fidelity of the reconstructed signal, while the SSIM metric validates the preservation of structural features. Experimental results show that the multi-channel U-Net method proposed in this paper can effectively improve sinogram repair quality, giving a solid foundation for subsequent CT image reconstruction. This method significantly improves the limitations of traditional single-channel models by fusing spatiotemporal context information, giving a fresh technical approach for the medical imaging processing field.
+% On the validation set, the model achieved excellent performance with MSE=0.301745, PSNR=35.6421 dB, and SSIM=0.9588. The PSNR value indicates high fidelity of the reconstructed signal, while the SSIM metric validates the preservation of structural features. Experimental results show that the multi-channel U-Net method proposed in this paper can effectively improve sinogram repair quality, giving a solid foundation for subsequent CT image reconstruction. This method significantly improves the limitations of traditional single-channel models by fusing spatiotemporal context information, giving a fresh technical approach for the medical imaging processing field.
 
 
 \subsection{Diffusion Probabilistic Models}
@@ -453,19 +454,10 @@ The training objective is typically simplified to predicting the noise added dur
     L(\theta) = \mathbb{E}_{\mathbf{x}_0, \boldsymbol{\epsilon}, t}\bigl[\|\boldsymbol{\epsilon} - \boldsymbol{\epsilon}_\theta(\mathbf{x}_t, t)\|^2\bigr]
 \end{equation}
 
-During sampling, starting from Gaussian noise $\mathbf{x}_T \sim \mathcal{N}(\mathbf{0}, \mathbf{I})$, the model iteratively refines the sample through multiple denoising steps. While this produces high-quality results, the iterative nature makes inference computationally expensive compared to single-pass methods like CNNs or GANs.
-
-Diffusion models provide several advantages for PET reconstruction under incomplete ring conditions \cite{webber2024}. They effectively avoid the mode collapse problem common in GANs, ensuring robust coverage of possible solutions \cite{singh2024}. They can also integrate learned priors for PET images, which is crucial when large segments of sinogram data are missing \cite{gong2024}. Their iterative refinement approach aligns well with traditional iterative reconstruction methods in PET imaging, such as MLEM.
-
-However, directly applying DPMs for reconstruction introduces challenges related to computation speed and partial data handling \cite{liu2019}. To address these limitations, we propose a coarse-to-fine method that introduces a deterministic, high-capacity coarse prediction module combined with a smaller diffusion model focused specifically on residual reconstruction \cite{han2023}.
-
-
-
-
-
-
-
-
+During sampling, starting from Gaussian noise $\mathbf{x}_T \sim \mathcal{N}(\mathbf{0}, \mathbf{I})$, the model iteratively refines the sample through several denoising steps. 
+Diffusion models provide several advantages for PET reconstruction under incomplete ring conditions \cite{webber2024}. They can avoid the mode collapse problem common in GANs, making sure robust coverage of possible solutions and also reconstruct details that are useful for clinical diagnosis but usually no captured by U-Net \cite{singh2024}. They can also integrate learned priors for PET images, which is important when large segments of sinogram data are missing \cite{gong2024}. 
+% Their iterative refinement approach is also quite similar to traditional iterative reconstruction methods in PET imaging, such as MLEM, 
+However, directly applying DPMs for reconstruction introduces issues pertaining to computation speed and partial data handling \cite{liu2019}. To fix these problems, we adopt a coarse-to-fine method that introduces a deterministic, high-capacity coarse prediction module combined with a smaller diffusion model focused specifically on residual reconstruction \cite{han2023}.
 
 
 
