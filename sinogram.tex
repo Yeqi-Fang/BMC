@@ -288,7 +288,7 @@ MLEM iteratively updates the estimate of $\lambda_j$ according to:
     \lambda_j^{(k)}
     \;\times\;
     \frac{\displaystyle \sum_{i=1}^{N} \frac{p_{ij}}{\sum_{\ell} p_{i\ell}\,\lambda_{\ell}^{(k)}} \; y_i}
-    {\displaystyle \sum_{i=1}^{N} p_{ij}}  ,
+    {\displaystyle \sum_{i=1}^{N} p_{ij}}.
 \end{equation}
 However, MLEM's convergence is too slow for large datasets. OSEM makes this process faster by dividing projections into subsets and then update the image estimate using one subset at a time:
 \begin{equation}
@@ -350,24 +350,20 @@ As shown in Figure \ref{fig:reconstruction_workflow}, this study proposes an inn
 %     \label{fig:unet_structure}
 % \end{figure*}
 \subsection{Sinogram Reconstruction Based on Attention U-Net}
-
+\label{sec:unet_sinogram}
 
 
 Although traditional U-Net performs excellently in medical image segmentation and reconstruction tasks \cite{ronneberger2015unetconvolutionalnetworksbiomedical}, it lacks the ability to selectively focus on key features when dealing with complex incomplete ring PET sinogram restoration problems. The Attention U-Net \cite{oktay2018attentionunetlearninglook} adopted in this study enhances the model's perception of important feature regions through spatial attention mechanisms while suppressing the influence of irrelevant features, which is more useful for restoring sinograms from incomplete data. We also tested some transformer-based U-Net like UNETR \cite{hatamizadeh2021unetrtransformers3dmedical}, which combines ViT encoder and convolutional decoder, and TransUNet \cite{chen2021transunettransformersmakestrong}, where both encoder and decoder are completely based on transformers. But they are slightly outperformed by Attention U-Net.
 
 The main innovation of Attention U-Net is the introduction of attention gating (AG) modules in the skip connection path of the original U-Net. These AG modules can adaptively highlight significant structures in the feed-forward feature maps while suppressing less relevant regions. 
 For sinogram reconstruction tasks, this mechanism is especially useful as it can selectively focus on structural features around missing areas, and then more accurately infer missing angular data. The mathematical expression of attention gating can be described as \cite{oktay2018attentionunetlearninglook}:
-
 \begin{equation}
-\alpha_i^l = \sigma_2(\psi^T(\sigma_1(W_x^T x_i^l + W_g^T g_i + b_g)) + b_\psi)
+\alpha_i^l = \sigma_2(\psi^T(\sigma_1(W_x^T x_i^l + W_g^T g_i + b_g)) + b_\psi),
 \end{equation}
-
 where $x_i^l$ is the low-level feature from the encoder, $g_i$ is the gating signal from the decoder (high-level feature), $\sigma_1$ and $\sigma_2$ are ReLU and Sigmoid activation functions respectively, and $W_x$, $W_g$, $b_g$, and $b_\psi$ are learnable parameters. $\alpha_i^l \in [0,1]$ is the calculated attention coefficient used to control the importance of features.
-
 After processing through the attention gate, the features can be represented as:
-
 \begin{equation}
-\hat{x}_i^l = x_i^l \cdot \alpha_i^l
+\hat{x}_i^l = x_i^l \cdot \alpha_i^l.
 \end{equation}
 
 The Attention gates learn to focus on relevant regions of the encoder feature maps by assigning weights based on the context, particularly in cases of severe angular loss. AGs can create a stronger understanding of sinogram continuity and consistency.
@@ -400,24 +396,28 @@ As shown in Figure~\ref{fig:sinogram_structure}, the central channel of each inp
     \centering
     \caption{Five-channel U-Net network structure parameters}
     \label{tab:unet_architecture}
-    \begin{tabular}{@{}lccc@{}}
+    \begin{tabular}{@{}p{2.6cm}p{2.5cm}p{1.4cm}p{1.4cm}@{}}
     \toprule
-    \textbf{Description} & \textbf{Type} & \textbf{Kernel Size} & \textbf{Output Channel} \\ \midrule
+    \textbf{Description} & \textbf{Type} & \textbf{Kernel} & \textbf{Output} \\ \midrule
     Input & - & - & 5 \\
-    Encoder Block 1 & Conv-BN-ReLU & 3 × 3 & 64 \\
-    Pooling & Max Pooling & 2 × 2 & 64 \\
-    Encoder Block 2 & Conv-BN-ReLU & 3 × 3 & 128 \\
-    Pooling & Max Pooling & 2 × 2 & 128 \\
-    Encoder Block 3 & Conv-BN-ReLU & 3 × 3 & 256 \\
-    Pooling & Max Pooling & 2 × 2 & 256 \\
-    Encoder Block 4 & Conv-BN-ReLU & 3 × 3 & 512 \\
-    Pooling & Max Pooling & 2 × 2 & 512 \\
-    Bottleneck & Conv-BN-ReLU & 3 × 3 & 1024 \\
-    Decoder Block 1 & Upsampling + Conv-BN-ReLU & 3 × 3 & 512 \\
-    Decoder Block 2 & Upsampling + Conv-BN-ReLU & 3 × 3 & 256 \\
-    Decoder Block 3 & Upsampling + Conv-BN-ReLU & 3 × 3 & 128 \\
-    Decoder Block 4 & Upsampling + Conv-BN-ReLU & 3 × 3 & 64 \\
-    Output Layer & Conv & 1 × 1 & 5 \\ \bottomrule
+    Encoder Block 1 & Conv-BN-ReLU & 3 $\times$ 3 & 64 \\
+    Pooling & Max Pooling & 2 $\times$ 2 & 64 \\
+    Encoder Block 2 & Conv-BN-ReLU & 3 $\times$ 3 & 128 \\
+    Pooling & Max Pooling & 2 $\times$ 2 & 128 \\
+    Encoder Block 3 & Conv-BN-ReLU & 3 $\times$ 3 & 256 \\
+    Pooling & Max Pooling & 2 $\times$ 2 & 256 \\
+    Encoder Block 4 & Conv-BN-ReLU & 3 $\times$ 3 & 512 \\
+    Pooling & Max Pooling & 2 $\times$ 2 & 512 \\
+    Bottleneck & Conv-BN-ReLU & 3 $\times$ 3 & 1024 \\
+    \multirow{2}{*}{Decoder Block 1} & Upsampling + & \multirow{2}{*}{3 $\times$ 3} & \multirow{2}{*}{512} \\
+    & Conv-BN-ReLU & & \\
+    \multirow{2}{*}{Decoder Block 2} & Upsampling + & \multirow{2}{*}{3 $\times$ 3} & \multirow{2}{*}{256} \\
+    & Conv-BN-ReLU & & \\
+    \multirow{2}{*}{Decoder Block 3} & Upsampling + & \multirow{2}{*}{3 $\times$ 3} & \multirow{2}{*}{128} \\
+    & Conv-BN-ReLU & & \\
+    \multirow{2}{*}{Decoder Block 4} & Upsampling + & \multirow{2}{*}{3 $\times$ 3} & \multirow{2}{*}{64} \\
+    & Conv-BN-ReLU & & \\
+    Output Layer & Conv & 1 $\times$ 1 & 5 \\ \bottomrule
     \end{tabular}
 \end{table}
 
@@ -429,41 +429,14 @@ Training efficiency is enhanced through mixed precision computation and gradient
 % On the validation set, the model achieved excellent performance with MSE=0.301745, PSNR=35.6421 dB, and SSIM=0.9588. The PSNR value indicates high fidelity of the reconstructed signal, while the SSIM metric validates the preservation of structural features. Experimental results show that the multi-channel U-Net method proposed in this paper can effectively improve sinogram repair quality, giving a solid foundation for subsequent CT image reconstruction. This method significantly improves the limitations of traditional single-channel models by fusing spatiotemporal context information, giving a fresh technical approach for the medical imaging processing field.
 
 
-\subsection{Diffusion Probabilistic Models}
-Diffusion probabilistic models (DPMs) have attracted great attention in image synthesis and inverse problems for their ability to produce state-of-the-art results and training stability. Unlike GANs that rely on adversarial objectives, DPMs are trained by maximizing a variational lower bound on the data log-likelihood. This section introduces the core principles of denoising diffusion probabilistic models relevant to our reconstruction approach.
-
-Diffusion models are a class of probabilistic generative models proposed by \textit{Sohl-Dickstein et al.}\cite{pmlr-v37-sohl-dickstein15}, and later widely applied in image generation tasks by \textit{Ho et al.}\cite{ho2020denoisingdiffusionprobabilisticmodels} and also medical images. Their framework can be understood through two main processes:
-
-% \subsubsection{Forward Process}
-The forward process gradually adds noise to the data $\mathbf{x}_0 \in \mathbb{R}^d$ through a Markov chain. At each step, Gaussian noise is added according to a predefined schedule:
-\begin{equation}
-    q(\mathbf{x}_t \mid \mathbf{x}_{t-1}) = \mathcal{N}(\mathbf{x}_t; \sqrt{1 - \beta_t} \mathbf{x}_{t-1}, \beta_t \mathbf{I})
-\end{equation}
-where $\beta_t \in (0, 1)$ represents the noise intensity at step $t$. The process eventually transforms the data distribution into an isotropic Gaussian distribution.
-
-% \subsubsection{Reverse Process}
-The reverse process is the core of generation, where a neural network is trained to denoise gradually, starting from Gaussian noise:
-\begin{equation}
-    p_\theta(\mathbf{x}_{t-1} \mid \mathbf{x}_t) = \mathcal{N}(\mathbf{x}_{t-1}; \boldsymbol{\mu}_\theta(\mathbf{x}_t, t), \sigma_t^2 \mathbf{I})
-\end{equation}
-The model learns to predict the noise component added during the forward process, allowing for step-by-step recovery of the clean signal.
-
-% \subsubsection{Training and Sampling}
-The training objective is typically simplified to predicting the noise added during the forward process:
-\begin{equation}
-    L(\theta) = \mathbb{E}_{\mathbf{x}_0, \boldsymbol{\epsilon}, t}\bigl[\|\boldsymbol{\epsilon} - \boldsymbol{\epsilon}_\theta(\mathbf{x}_t, t)\|^2\bigr]
-\end{equation}
-
-During sampling, starting from Gaussian noise $\mathbf{x}_T \sim \mathcal{N}(\mathbf{0}, \mathbf{I})$, the model iteratively refines the sample through several denoising steps. 
-Diffusion models provide several advantages for PET reconstruction under incomplete ring conditions \cite{webber2024}. They can avoid the mode collapse problem common in GANs, making sure robust coverage of possible solutions and also reconstruct details that are useful for clinical diagnosis but usually no captured by U-Net \cite{singh2024}. They can also integrate learned priors for PET images, which is important when large segments of sinogram data are missing \cite{gong2024}. 
-% Their iterative refinement approach is also quite similar to traditional iterative reconstruction methods in PET imaging, such as MLEM, 
-However, directly applying DPMs for reconstruction introduces issues pertaining to computation speed and partial data handling \cite{liu2019}. To fix these problems, we adopt a coarse-to-fine method that introduces a deterministic, high-capacity coarse prediction module combined with a smaller diffusion model focused specifically on residual reconstruction \cite{han2023}.
+% \subsection{Diffusion Probabilistic Models}
 
 
 
 \subsection{Coarse-to-Fine Reconstruction Framework}
 
-To effectively address reconstruction challenges in incomplete ring PET imaging, we propose a two-stage approach that balances reconstruction quality with computational efficiency.
+After repairing incomplete sinogram to a complete one, the image quality is stiil not satisfactory with its SSIM lower than 0.9. To properly deal with this problem, we adopt a two-stage approach that can restore the image on the geometry space, which can further improve image quality.
+% This technique also balances restoration quality with computational efficiency.
 \begin{figure}[ht]
     \centering
     \includegraphics[width=0.48\textwidth]{Images/C2F.png}
@@ -471,33 +444,65 @@ To effectively address reconstruction challenges in incomplete ring PET imaging,
     \label{fig:coarse_to_fine_framework}
 \end{figure}
 
-\subsubsection{Coarse Prediction Module (CPM)}
-The first stage employs a Coarse Prediction Module that generates an initial reconstruction estimate. Let \(\mathbf{c}\) represent our conditional inputs, comprising the low-quality PET image \(\mathbf{Y}_B\) from incomplete data and auxiliary guidance information \(\mathbf{X}_{\text{aux}}\). The CPM, implemented as a deterministic U-net, produces a coarse reconstruction \(\mathbf{x}_\text{cp}\) through a single forward pass:
+\subsubsection{Coarse Prediction Module (CPM) and Iterative Refinement Module (IRM)}
+
+The first stage employs a a traditional U-Net as the coarse prediction module that generates an initial reconstruction estimate. Let \(\mathbf{c}\) represent our conditional inputs, comprising the low-quality PET image \(\mathbf{Y}_B\) from incomplete data and auxiliary guidance information \(\mathbf{X}_{\text{aux}}\). The CPM, implemented as a deterministic U-net, produces a coarse reconstruction \(\mathbf{x}_\text{cp}\) through a single forward pass:
 \begin{equation}
 \mathbf{x}_\text{cp} = P_\theta(\mathbf{c})
 \end{equation}
-This module effectively captures global image structures while maintaining computational efficiency \cite{saharia2023}. The CPM is optimized using an L1 loss:
+This module can capture general image structures and give a good starting point for diffusion model later on \cite{saharia2023}. This U-Net is also optimized using an L1 loss:
 \begin{equation}
 \mathcal{L}_{\text{CPM}} = \|\mathbf{x}_\text{cp} - \mathbf{Y}_A\|_1
 \end{equation}
 where \(\mathbf{Y}_A\) represents the target high-quality reconstruction.
 
-\subsubsection{Iterative Refinement Module (IRM)}
-The second stage employs an Iterative Refinement Module that focuses specifically on recovering residual details. Rather than modeling the entire image, the IRM models only the residual \(\mathbf{r}_0 = \mathbf{Y}_A - \mathbf{x}_\text{cp}\). This residual-focused approach offers significant advantages:
+% \subsubsection{}
+The second stage uses a Diffusion probabilistic model (DPM) as iterative refinement module that focuses specifically on recovering residual details. 
 
-1. The IRM can utilize a smaller network capacity as it only needs to capture fine details
-2. The distribution gap between coarse prediction and ground truth is substantially smaller than between random noise and ground truth
-3. This narrower gap enables faster convergence and fewer diffusion steps during inference
+Diffusion models provide several advantages for PET reconstruction under the noisy and incomplete data conditions \cite{webber2024}. They can avoid the mode collapse problem common in GANs, making sure robust coverage of possible solutions and also reconstruct details that are useful for clinical diagnosis but usually no captured by U-Net \cite{singh2024}. They can also integrate learned priors for PET images, which is important when large segments of sinogram data are missing \cite{gong2024}. 
+However, directly applying DPMs for reconstruction introduces issues pertaining to computation speed and partial data handling \cite{liu2019}. To fix these problems, we adopt a coarse-to-fine method that introduces a deterministic, high-capacity coarse prediction module combined with a smaller diffusion model focused specifically on residual reconstruction \cite{han2023}.
+
+
+% DPMs have attracted great attention in image synthesis and inverse problems for their ability to produce state-of-the-art results and training stability. Unlike GANs that rely on adversarial objectives, DPMs are trained by maximizing a variational lower bound on the data log-likelihood. This section introduces the core principles of denoising diffusion probabilistic models relevant to our reconstruction approach.
+
+Diffusion models are a class of probabilistic generative models proposed by \textit{Sohl-Dickstein et al.}\cite{pmlr-v37-sohl-dickstein15}, and later widely applied in image generation tasks by \textit{Ho et al.}\cite{ho2020denoisingdiffusionprobabilisticmodels} and also medical images. Their framework can be understood through two main processes:
+
+The forward process gradually adds noise to the data $\mathbf{x}_0 \in \mathbb{R}^d$ through a Markov chain. At each step, Gaussian noise is added according to a predefined schedule:
+\begin{equation}
+    q(\mathbf{x}_t \mid \mathbf{x}_{t-1}) = \mathcal{N}(\mathbf{x}_t; \sqrt{1 - \beta_t} \mathbf{x}_{t-1}, \beta_t \mathbf{I})
+\end{equation}
+where $\beta_t \in (0, 1)$ represents the noise intensity at step $t$. The process eventually transforms the data distribution into an isotropic Gaussian distribution.
+
+The reverse process is the core of generation, where a neural network is trained to denoise gradually, starting from Gaussian noise:
+\begin{equation}
+    p_\theta(\mathbf{x}_{t-1} \mid \mathbf{x}_t) = \mathcal{N}(\mathbf{x}_{t-1}; \boldsymbol{\mu}_\theta(\mathbf{x}_t, t), \sigma_t^2 \mathbf{I})
+\end{equation}
+The model learns to predict the noise component added in the forward process, allowing for step-by-step recovery of the clean image.
+
+The training objective is usually simplified to predicting the noise added in the forward process:
+\begin{equation}
+    L(\theta) = \mathbb{E}_{\mathbf{x}_0, \boldsymbol{\epsilon}, t}\bigl[\|\boldsymbol{\epsilon} - \boldsymbol{\epsilon}_\theta(\mathbf{x}_t, t)\|^2\bigr]
+\end{equation}
+
+During sampling, we start from Gaussian noise $\mathbf{x}_T \sim \mathcal{N}(\mathbf{0}, \mathbf{I})$, and then the model iteratively refines the sample through several denoising steps. 
+
+Rather than modeling the entire image, the IRM models only the residual \(\mathbf{r}_0 = \mathbf{Y}_A - \mathbf{x}_\text{cp}\). This residual-focused methodology provides substantial benefits:
+Firstly, the IRM can utilize a smaller network capacity as it only needs to capture fine details.
+Secondly, the distribution gap between coarse prediction and ground truth is substantially smaller than between random noise and ground truth.
+Lastly, this narrower gap enables faster convergence and fewer diffusion steps during inference.
 
 The final reconstruction is obtained by combining the coarse prediction with the estimated residual:
 \begin{equation}
 \widehat{\mathbf{Y}_A} = \mathbf{x}_\text{cp} + \widehat{\mathbf{r}_0}
 \end{equation}
 % \subsection{Implementation Details}
-\subsubsection{Auxiliary Guidance Strategies}
-To further improve reconstruction quality, particularly in regions with severe data loss, we incorporate two complementary guidance signals:
 
-\textbf{Neighboring Axial Slices (NAS).} Since PET volumes are inherently three-dimensional, we leverage adjacent slices to provide spatial context \cite{xie2024}:
+
+
+\subsubsection{Auxiliary Guidance Strategies}
+To further improve reconstruction performance in regions with some discrepency between the prediction reconstructed from restoreed sinogram and the ground truth, we add two complementary guidance images:
+
+\textbf{Neighboring Axial Slices (NAS).} Since PET volumes are 3-dimensional, we use adjacent slices to provide more spatial context \cite{xie2024}, which is similar to what we have done in section~\ref{sec:unet_sinogram}:
 \begin{equation}
 \mathbf{X}_{\text{NAS}} = \{\mathbf{Y}_B^{(z-2)}, \mathbf{Y}_B^{(z-1)}, \mathbf{Y}_B^{(z+1)}, \mathbf{Y}_B^{(z+2)}\}
 \end{equation}
@@ -507,7 +512,7 @@ This multi-slice approach enables the model to maintain structural consistency a
 \begin{equation}
 \mathbf{X}_{\text{spec}} = \mathcal{F}(\mathbf{Y}_B)
 \end{equation}
-Spectral guidance provides global frequency priors that help suppress the high-frequency streak artifacts commonly associated with incomplete angular coverage in PET reconstruction \cite{luo2022}.
+Spectral guidance provides global frequency priors that help suppress the high-frequency streak artifacts commonly associated with missing information in PET reconstruction \cite{luo2022}.
 
 % \subsubsection{Contrastive Learning Strategy}
 % To ensure the model produces anatomically plausible reconstructions specific to each individual scan, we incorporate a contrastive learning objective. This approach distinguishes between:
@@ -535,11 +540,11 @@ This coarse-to-fine framework effectively balances reconstruction quality with c
 
 \subsection{Evaluation Metrics}
 
-To comprehensively evaluate the performance of incomplete ring PET reconstruction methods, this study employs multiple quantitative and qualitative metrics. These metrics measure the similarity between reconstructed images and ground truth images from different perspectives, including pixel-level accuracy, structural fidelity, and preservation of clinically relevant features.
+To comprehensively evaluate the performance of the reconstruction results of both sinogram and its reconstructed images, we uses several quantitative metrics. These metrics measure the similarity between reconstructed images and ground truth images from different perspectives, including pixel-level accuracy, structural fidelity, and preservation of clinically relevant features.
 
 % \subsubsection{Peak Signal-to-Noise Ratio (PSNR)}
 
-\textbf{Peak Signal-to-Noise Ratio (PSNR)} \cite{Hore2010PSNRvsSSIM} is a fundamental metric for evaluating reconstructed image quality, calculated based on Mean Squared Error (MSE) and expressed on a logarithmic scale. The definition of PSNR is as follows:
+\textbf{Peak Signal-to-Noise Ratio (PSNR)} \cite{Hore2010PSNRvsSSIM} is a fundamental metric for evaluating reconstructed image quality. It is calculated based on Mean Squared Error (MSE) and usually expressed on a logarithmic scale. The definition of PSNR is:
 \begin{equation}
 \text{PSNR} = 10 \cdot \log_{10}\left(\frac{\text{MAX}_I^2}{\text{MSE}}\right)
 \end{equation}
@@ -559,7 +564,7 @@ where $\mu_x$ and $\mu_y$ are the averages of images $x$ and $y$ respectively; $
 
 SSIM values range between [-1,1], with 1 indicating that two images are identical. In medical image reconstruction, SSIM is particularly important because it better reflects the preservation of diagnostically relevant structures. Our method achieved an average SSIM of 0.9588 on the validation set, indicating that the reconstructed images successfully preserved key structural features of the original PET images.
 
-\textbf{Normalized Mean Square Error (NMSE)} provides a normalized measure of image error relative to the energy of the original image \cite{Higashiyama2024NMSE}:
+\textbf{Normalized Mean Square Error (NMSE)} normalizes the image error with respect to the energy of the original image \cite{Higashiyama2024NMSE}:
 \begin{equation}
 \text{NMSE} = \frac{\sum_{i,j,k}(X_{i,j,k} - \hat{X}_{i,j,k})^2}{\sum_{i,j,k}X_{i,j,k}^2}
 \end{equation}
