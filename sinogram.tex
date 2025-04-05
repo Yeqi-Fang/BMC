@@ -273,13 +273,13 @@ The complete ring configuration (Figure~\ref{fig:pet_structures2}) provides our 
 
 \subsection{Conventional PET Reconstruction Methods}
 
-Before proposing new solutions, we thoroughly evaluated existing reconstruction approaches. \textbf{Analytical methods} like filtered backprojection (FBP) quickly proved inadequate for incomplete data. While computationally efficient, FBP's assumption of complete angular sampling produces severe streak artifacts when confronted with missing sectors. These artifacts aren't merely cosmetic—they can obscure subtle uptake variations that might indicate pathology.
-
-More promising are \textbf{maximum likelihood methods}, particularly MLEM and its faster variant OSEM \cite{363108}. These techniques incorporate the Poisson statistics of photon counting and can accommodate some degree of data incompleteness. The core of these approaches is the \textbf{system model}, which relates image voxels to measured projections:
+Before introducing new solutions, Several popular reconstruction approaches that are not based on machine learning have been assessed.
+% \textbf{Analytical methods} like filtered backprojection (FBP) quickly proved inadequate for incomplete data. Although it is computationally efficient, FBP's assumption of complete angular sampling produces a lot of artifacts when applying to missing sectors. These artifacts might obscure subtle uptake variations that may indicate pathology.
+Currently, main powerful methods are \textbf{maximum likelihood methods}, particularly MLEM and its faster variant OSEM \cite{363108}, which include the Poisson statistics of photon counting. The most important parameter of these two approaches is \textbf{system model}, which relates image voxels to measured projections:
 \begin{equation}
     y_i \;\approx\; \sum_{j} p_{ij}\,\lambda_j,
 \end{equation}
-Here, $\lambda_j$ represents the activity in voxel $j$, $y_i$ is the count measured in projection $i$, and $p_{ij}$ describes the probability that an emission from voxel $j$ is detected along projection $i$. This \textbf{system matrix} $p_{ij}$ encapsulates all the physics—from detector geometry to attenuation effects—that connects the unknown tracer distribution to our measurements.
+Here, $\lambda_j$ is the activity in voxel $j$, $y_i$ is the count measured in projection $i$, and $p_{ij}$ is the probability that an emission from voxel $j$ is detected along projection $i$. This \textbf{system matrix} $p_{ij}$ includes all the physics—from detector geometry to attenuation effects—that connects the unknown tracer distribution to our measurements.
 
 MLEM iteratively updates the estimate of $\lambda_j$ according to:
 \begin{equation}
@@ -290,7 +290,7 @@ MLEM iteratively updates the estimate of $\lambda_j$ according to:
     \frac{\displaystyle \sum_{i=1}^{N} \frac{p_{ij}}{\sum_{\ell} p_{i\ell}\,\lambda_{\ell}^{(k)}} \; y_i}
     {\displaystyle \sum_{i=1}^{N} p_{ij}}  ,
 \end{equation}
-While mathematically elegant, MLEM's convergence proves painfully slow for large datasets. OSEM accelerates this process by dividing projections into subsets, updating the image estimate using only one subset at a time:
+However, MLEM's convergence is too slow for large datasets. OSEM makes this process faster by dividing projections into subsets and then update the image estimate using one subset at a time:
 \begin{equation}
     \lambda_j^{(k+1)}
 \;=\;
@@ -316,11 +316,12 @@ While mathematically elegant, MLEM's convergence proves painfully slow for large
     \vspace{-.2cm}
     \label{fig:reconstruction_workflow}
 \end{figure*}
-Early in our experiments, we discovered that practical implementation matters tremendously. Rather than explicitly storing the massive system matrix, modern software calculates projections on-the-fly using matched projector/backprojector pairs. We based our work mainly on the PyTomography library \cite{POLSON2025102020}, which uses PyTorch and GPUs to accelerate complex computations. This technique was especially useful when processing large datasets created from simulations.
+% Early in our experiments, we discovered that practical implementation really matters. Rather than explicitly storing the massive system matrix, modern software calculates projections on-the-fly using matched projector/backprojector pairs. 
+Our work mainly depend on the PyTomography library \cite{POLSON2025102020}, which make use of PyTorch and GPUs to make intense computations a lot faster. This technique is important when reconstructing large listmode data with around one billion events.
 % Figure~\ref{fig:pet_reconstruction} shows a comparison between original and OSEM-reconstructed images using complete data. 
-While OSEM performs adequately with full angular sampling, its performance with incomplete rings proved disappointing. The missing angles create fundamental information gaps that iterative methods struggle to bridge, despite their statistical sophistication. 
-
-These limitations of conventional methods—analytical approaches failing completely and iterative techniques providing only marginal improvements—motivated our exploration of learning-based approaches that could potentially infer missing information based on structural and statistical patterns in PET data.
+While OSEM is powerful with full angular sampling, its performance with incomplete rings was disappointing [cf. Figure~\ref{fig:pet_incomplete_reconstruction}]. Because the missing angles also mean information loss that makes any iterative methods impossible to recover, despite their statistical sophistication. 
+Thus, OSEM can only be useful if the sinogram is complete or recover to a complete one. But it can not solve the core problem of missing data.
+% These limitations of conventional methods—analytical approaches failing completely and iterative techniques providing only marginal improvements—motivated our exploration of learning-based approaches that could potentially infer missing information based on structural and statistical patterns in PET data.
 
 % \textbf{Initialization}: The image estimate $\lambda_j^{(0)}$ is typically initialized to a uniform value, or using a transmission image if available.
 % \textbf{Regularization}: Pure OSEM algorithms may amplify noise, especially after multiple iterations. In practice, methods such as \textbf{post-smoothing} or \textbf{penalized likelihood} (adding spatial priors) are often used to control noise and obtain clearer images.
