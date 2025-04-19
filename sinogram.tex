@@ -220,14 +220,11 @@ Early in our research, we attempted to use Transformer-based approaches for dire
 
 % This failure forced us to reconsider our entire approach. 
 From listmode to sinogram, and from sinogram to reconstruction, the information is constantly losing. So, rather than attempting direct image-domain recovery, we pivoted to a two-stage method—first converting listmode data to sinograms with missing sections, then applying specialized techniques to complete these sinograms before final reconstruction. This approach, while computationally more intensive, provided a more appliable way to solve the missing data problem by retaining as much information as possible from sinogram.
+For simulation purposes, we mapped a $128\times128\times128$ voxel grid to physical space, yielding in-plane voxel dimensions of approximately 2.78 mm.
 
-
-
-For simulation purposes, we mapped a $128\times128\times128$ voxel grid to physical space, yielding in-plane voxel dimensions of approximately 2.78 mm:
-
-\begin{equation}
-\Delta x \approx \Delta y \approx \frac{25\,\text{cm}}{128} \approx 2.78\,\text{mm}.
-\end{equation}
+% \begin{equation}
+% \Delta x \approx \Delta y \approx \frac{25\,\text{cm}}{128} \approx 2.78\,\text{mm}.
+% \end{equation}
 
 \begin{figure*}[htbp]
     \centering
@@ -269,7 +266,7 @@ While our framework includes parameters for TOF detection, we chose not to imple
 
 Similarly, our simulation framework does not account for attenuation correction problems needing MRI or CT data in physical implementations—an important consideration for future translation of our approach. Our simulation generates idealized datasets by ray-tracing approximately 20 million emission events from $128^3$-voxel phantom images, creating perfectly clean list-mode data without the noise and artifacts present in real-world situation. 
 % Because some photon pairs are not recieved by detectors, the number of events in the listmode is about 8 million. 
-We used a dataset of 206 brain PET volumes, each with dimensions of $128^3$-voxel from a public dataset as phantom images for our simulation \cite{Han2023DiffusionPET}. Each image simulates 2 billion events, the detectors detect 560 million events on average and record them in the listmode data. We then removed detectors with angles between [30, 90] and [210, 270] This meant that any LOR with either detector within these two angular ranges cannot be recorded. Incomplete sinograms generated in this configuration only have about 306 million events, accounting for 54.6\% of the originally detected events.
+We used a dataset of 206 brain PET volumes, each with dimensions of $128^3$-voxel from a public dataset as phantom images for our simulation \cite{Han2023DiffusionPET}. Each image simulates 2 billion events, the detectors detect 560 million events on average and record them in the listmode data. We then removed detectors with angles between [30\degree, 90\degree] and [210\degree, 270\degree]. This meant that any LOR with either detector within these two angular ranges cannot be recorded. Incomplete sinograms generated in this configuration only have about 306 million events, accounting for 54.6\% of the originally detected events.
 
 The complete ring configuration (Figure~\ref{fig:pet_structures2}) provides our reference reconstruction $\mathbf{Y}_A$, representing the best-case scenario with full angular sampling. For incomplete ring experiments (Figure~\ref{fig:pet_structures2}), we selectively remove detectors—either entire rings or angular segments—and generate a degraded reconstruction $\mathbf{Y}_B$ from the resulting partial data. The striking quality difference between $\mathbf{Y}_A$ and $\mathbf{Y}_B$ shows the reconstruction challenge we aim to solve, as shown in Figure~\ref{fig:pet_incomplete_reconstruction}.
 
@@ -314,7 +311,9 @@ However, MLEM's convergence is too slow for large datasets. OSEM makes this proc
     \centering
     \includegraphics[width=\textwidth]{Images/reconstruction_workflow}
     \vspace{-.5cm}
-    \caption{Overall flow diagram of the incomplete ring PET reconstruction method. First, incomplete sinograms due to missing detectors (top left) are repaired through a U-Net deep learning model to generate complete sinogram data (top right). Subsequently, the complete sinogram is converted into a PET image (bottom right) using the OSEM iterative reconstruction algorithm. For comparison, the bottom left image shows a PET image reconstructed directly from incomplete data using a coarse-to-fine framework (dual-model architecture with U-Net and diffusion model). This method effectively compensates for data loss caused by incomplete ring geometry, achieving high-quality brain PET image reconstruction that preserves key anatomical structures and tracer distribution features.}
+    \caption{Overall flow diagram of the incomplete ring PET reconstruction method. First, incomplete sinograms due to missing detectors (top left) are repaired through a U-Net deep learning model to generate complete sinogram data (top right). Subsequently, the complete sinogram is converted into a PET image (bottom right) using the OSEM iterative reconstruction algorithm. For comparison, the bottom left image shows a PET image reconstructed directly from incomplete data using a coarse-to-fine framework (dual-model architecture with U-Net and diffusion model). 
+    % This method effectively compensates for data loss caused by incomplete ring geometry, achieving high-quality brain PET image reconstruction that preserves key anatomical structures and tracer distribution features.
+    }
     \vspace{-.2cm}
     \label{fig:reconstruction_workflow}
 \end{figure*}
@@ -357,7 +356,7 @@ As shown in Figure \ref{fig:reconstruction_workflow}, this study proposes an inn
 Sinogram repair is very important in incomplete ring PET imaging, as its quality directly affects the precision of reconstructed images. 
 The shape of sinogram tensors is $(D, 2D+1, R^2)$, or $(182, 365, 1764)$ in our work, where $R$ is the number of axial rings and $D$ is the number of detectors each ring. And it is obvious that this tensor is too large to be directly fed into any UNet-like models. So we cut this large $(D, 2D+1, R^2)$ tensor into $R\times(D, 2D+1, R)$ tensors. 
 As shown in Figure~\ref{fig:sinogram_structure}, the central channel of each input tensor corresponds to the current sinogram slice, while the direct spatial neighbors (slices $j-1$ and $j+1$) and temporal neighbors from previous and subsequent sinogram periods (slices $j-R$ and $j+R$) constitute the other four channels. For boundary handling, when adjacent indices exceed the dataset range, the central slice itself is used for channel filling, ensuring input dimension consistency. These neighboring slices are important for improving the model's understanding of local structural continuity and temporal consistency. So finally we have $1764\times(182, 365, 5)$ tensors for each sinogram. 
-To make sure each image was evaluated once in the test set, we implemented 6-fold cross-validation across the 206 volumes (4 groups with 34 images and 2 groups with 35 images). The predictions obtained from our model were reconstructed using the OSEM algorithm to achieve preliminary geometric recovery, and these reconstructions were subsequently used as inputs for our proposed Coarse-to-Fine framework.
+To make sure each image was evaluated once in the test set, we implemented 6-fold cross-validation across the 206 volumes (4 groups with 34 images and 2 groups with 35 images). The predictions obtained from our model were reconstructed using the OSEM algorithm to achieve preliminary geometric recovery, and these reconstructions were subsequently used as inputs for our the coarse-to-fine framework.
 
 Although traditional U-Net performs excellently in medical image segmentation and reconstruction tasks \cite{ronneberger2015unetconvolutionalnetworksbiomedical}, it lacks the ability to selectively focus on key features when dealing with complex incomplete ring PET sinogram restoration problems. The Attention U-Net \cite{oktay2018attentionunetlearninglook} adopted in this study enhances the model's perception of important feature regions through spatial attention mechanisms while suppressing the influence of irrelevant features, which is more useful for restoring sinograms from incomplete data. We also tested some transformer-based U-Net like UNETR \cite{hatamizadeh2021unetrtransformers3dmedical}, which combines ViT encoder and convolutional decoder, and TransUNet \cite{chen2021transunettransformersmakestrong}, where both encoder and decoder are completely based on transformers. But they are slightly outperformed by Attention U-Net.
 
@@ -599,7 +598,9 @@ Figure\ref{fig:pet_brain_reconstruction} shows the final PET image quality gener
     \centering
     \includegraphics[width=\textwidth]{Images/compare_reconstruction_restoration}
     \vspace{-1cm}
-    \caption{Comparison of original PET brain image (left) with PET image reconstructed from predicted sinogram (right), both showing the 64th layer slice. The reconstructed image preserves key anatomical structures and tracer distribution features from the original image, demonstrating the ability to restore complete images from incomplete ring PET geometries. The color bar indicates tracer concentration, with the higher maximum value (0.11) in the right reconstructed image compared to the original image (0.07) possibly indicating signal intensity changes during the reconstruction process.}
+    \caption{Comparison of original PET brain image (left) with PET image reconstructed from predicted sinogram (right), both showing the 64th layer slice. The reconstructed image preserves key anatomical structures and tracer distribution features from the original image, illustrating the capacity to restore complete images from incomplete ring PET geometries. 
+    % The color bar indicates tracer concentration, with the higher maximum value (0.11) in the right reconstructed image compared to the original image (0.07) possibly indicating signal intensity changes during the reconstruction process.
+    }
     \label{fig:pet_brain_reconstruction}
 \end{figure*}
 
